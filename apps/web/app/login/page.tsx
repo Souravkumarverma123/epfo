@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "~/trpc/client";
 import { SiteShell } from "~/components/site/site-shell";
+import { DemoFill, DEMO_UAN } from "~/components/site/demo-fill";
 import { COLOR } from "~/design/tokens";
 import { useLang } from "~/design/lang";
 import { Button } from "~/components/ui/button";
@@ -92,10 +93,21 @@ function LoginContent() {
                 value={uan}
                 onChange={(e) => setUan(e.target.value)}
                 placeholder="100 234 567 890"
-                style={{ ...inputStyle, margin: "0 0 24px" }}
+                style={{ ...inputStyle, margin: "0 0 12px" }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && uan.trim()) requestOtp.mutate({ uan });
                 }}
+              />
+              {/* One-click fill for the demo account. The placeholder alone
+                  reads as an already-filled value at a glance — it isn't,
+                  and "Send code" stays disabled, which looks broken rather
+                  than empty. A real button removes that trap for anyone
+                  landing here without the credentials to hand. */}
+              <DemoFill
+                label={lang === "hi" ? "डेमो खाता:" : "Demo account:"}
+                value={DEMO_UAN}
+                display="100 234 567 890"
+                onFill={() => setUan(DEMO_UAN)}
               />
               {error && (
                 <p style={{ fontSize: 16, color: "#8a2321", margin: "0 0 20px" }}>{error}</p>
@@ -124,24 +136,29 @@ function LoginContent() {
               <label style={{ display: "block", fontSize: 18, fontWeight: 700, margin: "20px 0 10px" }}>
                 {lang === "hi" ? "वन-टाइम कोड" : "One-time code"}
               </label>
-              <InputOTP maxLength={6} value={code} onChange={setCode}>
-                <InputOTPGroup>
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <InputOTPSlot
-                      key={i}
-                      index={i}
-                      className="!h-14 !w-12 !rounded-none !border-2 !border-[#1a1815] !text-xl !bg-white !text-[#1a1815] first:!rounded-none last:!rounded-none data-[active=true]:!border-[#262f8c] data-[active=true]:!ring-0"
-                    />
-                  ))}
-                </InputOTPGroup>
-              </InputOTP>
+              <div style={{ margin: "0 0 16px" }}>
+                <InputOTP maxLength={6} value={code} onChange={setCode}>
+                  <InputOTPGroup>
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <InputOTPSlot
+                        key={i}
+                        index={i}
+                        className="!h-14 !w-12 !rounded-none !border-2 !border-[#1a1815] !text-xl !bg-white !text-[#1a1815] first:!rounded-none last:!rounded-none data-[active=true]:!border-[#262f8c] data-[active=true]:!ring-0"
+                      />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
               {devOtp && (
-                <p style={{ fontSize: 16, color: COLOR.muted, margin: "16px 0 0" }}>
-                  {lang === "hi"
-                    ? "डेमो मोड — कोई SMS नहीं भेजा जाता। आपका कोड है "
-                    : "Demo mode — no SMS is sent. Your code is "}
-                  <span style={{ fontFamily: "monospace", fontWeight: 700, color: COLOR.ink }}>{devOtp}</span>.
-                </p>
+                <DemoFill
+                  label={
+                    lang === "hi"
+                      ? "डेमो मोड — कोई SMS नहीं। कोड:"
+                      : "Demo mode — no SMS sent. Code:"
+                  }
+                  value={devOtp}
+                  onFill={() => setCode(devOtp)}
+                />
               )}
               {error && (
                 <p style={{ fontSize: 16, color: "#8a2321", margin: "16px 0 0" }}>{error}</p>

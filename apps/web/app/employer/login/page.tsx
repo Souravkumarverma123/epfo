@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "~/trpc/client";
 import { SiteShell } from "~/components/site/site-shell";
+import { DemoFill, DEMO_ESTABLISHMENT_CODE } from "~/components/site/demo-fill";
 import { COLOR } from "~/design/tokens";
 import { useLang } from "~/design/lang";
 import { Button } from "~/components/ui/button";
@@ -91,10 +92,16 @@ function EmployerLoginContent() {
                 value={establishmentCode}
                 onChange={(e) => setEstablishmentCode(e.target.value)}
                 placeholder="BGBNG00456780000123"
-                style={{ ...inputStyle, margin: "0 0 24px" }}
+                style={{ ...inputStyle, margin: "0 0 12px" }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && establishmentCode.trim()) requestOtp.mutate({ establishmentCode });
                 }}
+              />
+              {/* See DemoFill's comment — same placeholder-looks-filled trap. */}
+              <DemoFill
+                label={lang === "hi" ? "डेमो प्रतिष्ठान:" : "Demo establishment:"}
+                value={DEMO_ESTABLISHMENT_CODE}
+                onFill={() => setEstablishmentCode(DEMO_ESTABLISHMENT_CODE)}
               />
               {error && <p style={{ fontSize: 16, color: "#8a2321", margin: "0 0 20px" }}>{error}</p>}
               <Button
@@ -121,24 +128,29 @@ function EmployerLoginContent() {
               <label style={{ display: "block", fontSize: 18, fontWeight: 700, margin: "20px 0 10px" }}>
                 {lang === "hi" ? "वन-टाइम कोड" : "One-time code"}
               </label>
-              <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-                <InputOTPGroup>
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <InputOTPSlot
-                      key={i}
-                      index={i}
-                      className="!h-14 !w-12 !rounded-none !border-2 !border-[#1a1815] !text-xl !bg-white !text-[#1a1815] first:!rounded-none last:!rounded-none data-[active=true]:!border-[#262f8c] data-[active=true]:!ring-0"
-                    />
-                  ))}
-                </InputOTPGroup>
-              </InputOTP>
+              <div style={{ margin: "0 0 16px" }}>
+                <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+                  <InputOTPGroup>
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <InputOTPSlot
+                        key={i}
+                        index={i}
+                        className="!h-14 !w-12 !rounded-none !border-2 !border-[#1a1815] !text-xl !bg-white !text-[#1a1815] first:!rounded-none last:!rounded-none data-[active=true]:!border-[#262f8c] data-[active=true]:!ring-0"
+                      />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
               {devOtp && (
-                <p style={{ fontSize: 16, color: COLOR.muted, margin: "16px 0 0" }}>
-                  {lang === "hi"
-                    ? "डेमो मोड — कोई SMS नहीं भेजा जाता। आपका कोड है "
-                    : "Demo mode — no SMS is sent. Your code is "}
-                  <span style={{ fontFamily: "monospace", fontWeight: 700, color: COLOR.ink }}>{devOtp}</span>.
-                </p>
+                <DemoFill
+                  label={
+                    lang === "hi"
+                      ? "डेमो मोड — कोई SMS नहीं। कोड:"
+                      : "Demo mode — no SMS sent. Code:"
+                  }
+                  value={devOtp}
+                  onFill={() => setOtp(devOtp)}
+                />
               )}
               {error && <p style={{ fontSize: 16, color: "#8a2321", margin: "16px 0 0" }}>{error}</p>}
               <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", marginTop: 28 }}>
