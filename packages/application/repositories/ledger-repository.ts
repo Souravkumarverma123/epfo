@@ -1,4 +1,4 @@
-import { desc, eq, ledgerEntries, memberBalances } from "@repo/database";
+import { and, desc, eq, isNull, ledgerEntries, memberBalances, or } from "@repo/database";
 import { BaseRepository } from "./base-repository";
 import type { Executor } from "../executor";
 
@@ -13,6 +13,12 @@ export interface PostLedgerEntryInput {
   direction: "CREDIT" | "DEBIT";
   amountPaise: bigint;
   reference?: string;
+  /** Set for entries tied to one employer relationship (a CONTRIBUTION);
+   *  left unset for whole-account entries (e.g. INTEREST). */
+  employmentId?: string;
+  /** Set when this entry was posted for a specific contribution row —
+   *  lets the passbook join back to month/pension-share directly. */
+  contributionId?: string;
 }
 
 export class LedgerRepository extends BaseRepository {
@@ -48,6 +54,28 @@ export class LedgerRepository extends BaseRepository {
   async findLatestByType(memberId: string, type: string): Promise<LedgerEntryRow | undefined> {
     const rows = await this.listByMember(memberId, 500);
     return rows.find((r) => r.type === type);
+  }
+
+  /**
+   * Entries for one employer relationship, oldest first (passbook order).
+   * When `includeWholeAccountEntries` is true, entries with no employment
+   * (e.g. INTEREST) are included too — the caller decides this only makes
+   * sense for the member's currently active employment, not a past one.
+   */
+  async listByMemberAndEmployment(
+    memberId: string,
+    employmentId: string,
+    includeWholeAccountEntries: boolean,
+  ): Promise<LedgerEntryRow[]> {
+    const employmentFilter = includeWholeAccountEntries
+      ? or(eq(ledgerEntries.employmentId, employmentId), isNull(ledgerEntries.employmentId))
+      : eq(ledgerEntries.employmentId, employmentId);
+
+    return this.executor
+      .select()
+      .from(ledgerEntries)
+      .where(and(eq(ledgerEntries.memberId, memberId), employmentFilter))
+      .orderBy(ledgerEntries.sequenceNumber);
   }
 
   /**
@@ -90,6 +118,8 @@ export class LedgerRepository extends BaseRepository {
         amountPaise: entry.amountPaise,
         balanceAfterPaise: newBalance,
         reference: entry.reference,
+        employmentId: entry.employmentId,
+        contributionId: entry.contributionId,
       })
       .returning();
 

@@ -3,11 +3,17 @@ import { db } from "@repo/database";
 import {
   AuthRepository,
   AuthService,
+  ClaimsRepository,
+  ClaimsService,
   ContributionRepository,
   EmploymentRepository,
+  IdempotencyRepository,
   LedgerRepository,
   MemberRepository,
   MemberService,
+  OutboxRepository,
+  PassbookService,
+  withTransaction,
   type MemberRow,
 } from "@repo/application";
 import { SESSION_COOKIE_NAME, parseCookies } from "./session-cookie";
@@ -19,8 +25,8 @@ import { SESSION_COOKIE_NAME, parseCookies } from "./session-cookie";
  * "how are you authenticated" question in exactly one place.
  *
  * Services are wired once per request against the shared `db` pool — routes
- * use ctx.authService / ctx.memberService instead of constructing
- * repositories themselves.
+ * use ctx.authService / ctx.memberService / ctx.passbookService /
+ * ctx.claimsService instead of constructing repositories themselves.
  */
 export interface Context {
   req: Request;
@@ -29,6 +35,8 @@ export interface Context {
   member: MemberRow | null;
   authService: AuthService;
   memberService: MemberService;
+  passbookService: PassbookService;
+  claimsService: ClaimsService;
 }
 
 export async function createContext({
@@ -44,6 +52,20 @@ export async function createContext({
     new EmploymentRepository(db),
     new ContributionRepository(db),
     new LedgerRepository(db),
+  );
+  const passbookService = new PassbookService(
+    new EmploymentRepository(db),
+    new ContributionRepository(db),
+    new LedgerRepository(db),
+  );
+  const claimsService = new ClaimsService(
+    new EmploymentRepository(db),
+    new ContributionRepository(db),
+    new LedgerRepository(db),
+    new ClaimsRepository(db),
+    new IdempotencyRepository(db),
+    new OutboxRepository(db),
+    withTransaction,
   );
 
   const cookies = parseCookies(req.headers.cookie);
@@ -61,7 +83,7 @@ export async function createContext({
     }
   }
 
-  return { req, res, sessionId, member, authService, memberService };
+  return { req, res, sessionId, member, authService, memberService, passbookService, claimsService };
 }
 
 export type { MemberRow };

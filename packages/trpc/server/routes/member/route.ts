@@ -2,6 +2,7 @@ import { paiseToWire } from "@repo/domain";
 import { protectedProcedure, router } from "../../trpc";
 import { zodUndefinedModel } from "../../schema";
 import { dashboardSummarySchema, type DashboardSummaryWire } from "./schema";
+import { passbookInputSchema, passbookOutputSchema, type PassbookOutputWire } from "./passbook-schema";
 
 export const memberRouter = router({
   getDashboardSummary: protectedProcedure
@@ -38,6 +39,32 @@ export const memberRouter = router({
         pensionServiceYears: summary.pensionService.years,
         pensionServiceMonths: summary.pensionService.months,
         tasks: summary.tasks,
+      };
+    }),
+
+  getPassbook: protectedProcedure
+    .meta({ openapi: { method: "GET", path: "/member/passbook" } })
+    .input(passbookInputSchema)
+    .output(passbookOutputSchema)
+    .query(async ({ ctx, input }): Promise<PassbookOutputWire> => {
+      const result = await ctx.passbookService.getPassbook(ctx.member.id, {
+        employmentId: input.employmentId,
+        financialYear: input.financialYear,
+      });
+
+      return {
+        employments: result.employments,
+        financialYears: result.financialYears,
+        selectedEmploymentId: result.selectedEmploymentId,
+        selectedFinancialYear: result.selectedFinancialYear,
+        rows: result.rows.map((r) => ({
+          type: r.type,
+          label: r.label,
+          employeeSharePaise: paiseToWire(r.employeeSharePaise),
+          employerSharePaise: paiseToWire(r.employerSharePaise),
+          pensionSharePaise: paiseToWire(r.pensionSharePaise),
+          balanceAfterPaise: paiseToWire(r.balanceAfterPaise),
+        })),
       };
     }),
 });

@@ -5,7 +5,8 @@
 
 import { bigint, index, integer, pgTable, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { createdAt, updatedAt } from "./shared";
-import { members } from "./member";
+import { employments, members } from "./member";
+import { contributions } from "./contribution";
 
 /**
  * LedgerEntry — "member, transaction, type, direction, amount, balance-after,
@@ -33,12 +34,23 @@ export const ledgerEntries = pgTable(
     amountPaise: bigint("amount_paise", { mode: "bigint" }).notNull(),
     balanceAfterPaise: bigint("balance_after_paise", { mode: "bigint" }).notNull(),
     reference: text("reference"),
+    /** Which employer relationship this entry belongs to, when it has one
+     *  (a CONTRIBUTION does; an INTEREST credit on the whole account does
+     *  not). Lets the passbook filter by employer with a real join instead
+     *  of parsing `reference` text. Nullable — not every entry has one. */
+    employmentId: uuid("employment_id").references(() => employments.id),
+    /** The specific contribution this entry was posted for, when there is
+     *  one. Lets the passbook pull month/pension-share (not itself part of
+     *  the ledger — PRD §12 amendment) via a direct join instead of
+     *  matching contributions to ledger entries positionally. */
+    contributionId: uuid("contribution_id").references(() => contributions.id),
     createdAt: createdAt(),
   },
   (t) => [
     uniqueIndex("ledger_member_sequence_idx").on(t.memberId, t.sequenceNumber),
     index("ledger_member_created_idx").on(t.memberId, t.createdAt),
     index("ledger_txn_idx").on(t.transactionId),
+    index("ledger_employment_idx").on(t.employmentId),
   ],
 );
 
