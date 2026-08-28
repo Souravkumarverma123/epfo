@@ -37,3 +37,8 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# not imp files
+submission-summary-variant-b.txt
+description.txt
+video-script.txt
