@@ -1,0 +1,9 @@
+For an EPF member, the hard part of a withdrawal claim isn't the form — it's the silence afterwards. There is no dependable way to tell whether a claim is moving, stuck, or lost, and no confidence that re-submitting won't trigger a duplicate. So people re-file, call helplines, and wait.
+
+EPFO One rebuilds that journey around one promise: once the system says it received your claim, it must explain where it is, recover after failures, and never process it twice.
+
+Working today: OTP sign-in, passbook, dashboard, and a four-step claim submission that is genuinely idempotent — the same request replayed returns the original claim, not a second one. Claims advance through a real state machine in Postgres with a transactional outbox and database-level ledger concurrency control. A demo panel takes the KYC or payment dependency down mid-claim: the citizen sees "your claim is safe" instead of an error, and the claim resumes on its own when the dependency returns, completing with a real ledger debit. An OpenAI assistant answers in English or Hindi and reads your actual balance and claim status through those same services — it explains state, it never changes it.
+
+All data is synthetic. Features we didn't build are visibly disabled with reasons rather than faked, and our accessibility page states plainly what hasn't been audited. Mock OTP stands in for OIDC, poll-driven progression for a workflow engine; both swap out without changing anything downstream.
+
+Built with Codex. In-product assistant: OpenAI gpt-4o-mini.
