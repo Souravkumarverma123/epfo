@@ -39,7 +39,7 @@ export const CHROME_COPY: Record<
   en: {
     langSwitch: "हिन्दी में देखें",
     helpline: "Helpline 1800 118 005",
-    service: " Employee Provident Fund Organisation",
+    service: "EPFO One",
     signout: "Sign out",
     employeeLogin: "Employee Login",
     employerLogin: "Employer Login",

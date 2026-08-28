@@ -61,9 +61,11 @@ export function SiteHeader() {
           }}
         >
           <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-            <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.01em" }}>EPFO</span>
+            <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-0.01em" }}>EPFO One</span>
             <span style={{ fontSize: 14, color: COLOR.headerMuted }}>
-              Employees&apos; Provident Fund Organisation, India
+              {lang === "hi"
+                ? "अनौपचारिक प्रोटोटाइप — भारत सरकार से संबद्ध नहीं"
+                : "Unofficial prototype, not affiliated with the Government of India"}
             </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
