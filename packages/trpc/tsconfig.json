@@ -1,4 +1,12 @@
 {
   "extends": ["@repo/typescript-config/node.json"],
+  "compilerOptions": {
+    // protectedProcedure's inferred type reaches into @types/express's
+    // internals; nothing in this monorepo consumes packages/trpc's compiled
+    // .d.ts output (everything resolves straight to source), so disable
+    // declaration emit rather than widen the middleware's type by hand.
+    "declaration": false,
+    "declarationMap": false
+  },
   "include": ["server/", "client/"]
 }

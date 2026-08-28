@@ -13,8 +13,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "My App",
-  description: "A new project",
+  title: "EPFO One",
+  description: "Unofficial prototype — synthetic data only.",
 };
 
 export default function RootLayout({

@@ -163,6 +163,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.2.8
         version: 1.2.16(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@repo/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@repo/trpc':
         specifier: workspace:*
         version: link:../../packages/trpc
@@ -411,6 +414,15 @@ importers:
 
   packages/trpc:
     dependencies:
+      '@repo/application':
+        specifier: workspace:*
+        version: link:../application
+      '@repo/database':
+        specifier: workspace:*
+        version: link:../database
+      '@repo/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@trpc/client':
         specifier: ^11.18.0
         version: 11.18.0(@trpc/server@11.18.0(typescript@5.9.3))(typescript@5.9.3)
@@ -430,6 +442,9 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
       dotenv-cli:
         specifier: ^11.0.0
         version: 11.0.0

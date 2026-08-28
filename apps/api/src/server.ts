@@ -17,13 +17,14 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
   baseUrl: env.BASE_URL.concat("/api"),
 });
 
-if (env.NODE_ENV !== "prod") {
-  app.use(
-    cors({
-      origin: "*",
-    }),
-  );
-}
+// Session cookies (PRD §23) require a specific origin, not "*" — the CORS
+// spec forbids combining a wildcard origin with credentials:true.
+app.use(
+  cors({
+    origin: env.WEB_ORIGIN,
+    credentials: true,
+  }),
+);
 
 app.use(express.json());
 

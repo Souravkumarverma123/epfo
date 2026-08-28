@@ -3,3 +3,5 @@ export * from "./src/claims/status";
 export * from "./src/claims/copy";
 export * from "./src/claims/eligibility";
 export * from "./src/identity/pii";
+export * from "./src/member/service-duration";
+export * from "./src/member/tasks";

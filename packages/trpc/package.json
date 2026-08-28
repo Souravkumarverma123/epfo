@@ -5,10 +5,14 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/express": "^5.0.6",
     "dotenv-cli": "^11.0.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@repo/application": "workspace:*",
+    "@repo/database": "workspace:*",
+    "@repo/domain": "workspace:*",
     "@trpc/client": "^11.18.0",
     "@trpc/server": "^11.18.0",
     "trpc-to-openapi": "^3.1.0",
