@@ -21,3 +21,5 @@ export * from "./services/passbook-service";
 export * from "./services/claims-service";
 export * from "./services/employer-auth-service";
 export * from "./services/employer-service";
+export * from "./services/assistant-service";
+export * from "./services/assistant-knowledge";

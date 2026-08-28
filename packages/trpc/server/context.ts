@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
+import OpenAI from "openai";
 import { db } from "@repo/database";
 import {
+  AssistantService,
   AuthRepository,
   AuthService,
   ClaimsRepository,
@@ -26,6 +28,14 @@ import {
 import { SESSION_COOKIE_NAME, parseCookies } from "./session-cookie";
 import { EMPLOYER_SESSION_COOKIE_NAME } from "./employer-session-cookie";
 
+/** One OpenAI client for the process, not per-request — same reasoning as
+ *  `db` being a module-level singleton in @repo/database. Undefined (not
+ *  constructed) when no key is set, so local dev without one doesn't
+ *  crash at import time; AssistantService's caller is what turns that
+ *  into a clean error for a chat request specifically. */
+const openaiApiKey = process.env.OPENAI_API_KEY;
+const openaiClient = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
+
 /**
  * Every request's session is resolved once, here, before any procedure runs.
  * Procedures never touch cookies or AuthService directly — they read
@@ -50,6 +60,9 @@ export interface Context {
   employer: EstablishmentRow | null;
   employerAuthService: EmployerAuthService;
   employerService: EmployerService;
+  /** null when OPENAI_API_KEY isn't set (local dev without one) —
+   *  assistantRouter is what turns that into a clean user-facing error. */
+  assistantService: AssistantService | null;
 }
 
 export async function createContext({
@@ -88,6 +101,9 @@ export async function createContext({
     new EmployerAuthRepository(db),
   );
   const employerService = new EmployerService(new EmploymentRepository(db));
+  const assistantService = openaiClient
+    ? new AssistantService(openaiClient, memberService, claimsService)
+    : null;
 
   const cookies = parseCookies(req.headers.cookie);
   const sessionId = cookies[SESSION_COOKIE_NAME] ?? null;
@@ -128,6 +144,7 @@ export async function createContext({
     employer,
     employerAuthService,
     employerService,
+    assistantService,
   };
 }
 

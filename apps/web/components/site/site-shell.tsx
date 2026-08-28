@@ -5,6 +5,7 @@ import { publicSans, COLOR } from "~/design/tokens";
 import { LangProvider } from "~/design/lang";
 import { SiteHeader } from "./site-header";
 import { SiteFooter } from "./site-footer";
+import { AiAssistant } from "./ai-assistant";
 
 /**
  * The chrome every screen in the design shares: top bar, white header + nav,
@@ -81,6 +82,7 @@ export function SiteShell({
           )}
           {children}
           <SiteFooter />
+          <AiAssistant />
         </div>
       </div>
     </LangProvider>

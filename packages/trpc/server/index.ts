@@ -6,6 +6,7 @@ import { memberRouter } from "./routes/member/route";
 import { claimsRouter } from "./routes/claims/route";
 import { demoRouter } from "./routes/demo/route";
 import { employerAuthRouter, employerRouter } from "./routes/employer/route";
+import { assistantRouter } from "./routes/assistant/route";
 
 export const serverRouter = router({
   health: healthRouter,
@@ -15,6 +16,7 @@ export const serverRouter = router({
   demo: demoRouter,
   employerAuth: employerAuthRouter,
   employer: employerRouter,
+  assistant: assistantRouter,
 });
 
 export { createContext } from "./context";

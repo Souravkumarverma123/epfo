@@ -7,6 +7,10 @@ const envSchema = z.object({
   // Session cookies need a specific CORS origin + credentials:true — "*"
   // cannot be paired with credentials per the CORS spec.
   WEB_ORIGIN: z.string().default("http://localhost:3000"),
+  // Optional in local dev (the AI Assistant just errors cleanly if a
+  // request comes in without one set) — required in prod, set via
+  // .env.prod on the deploy box, never committed.
+  OPENAI_API_KEY: z.string().optional(),
 });
 
 function createEnv(env: NodeJS.ProcessEnv) {
