@@ -13,10 +13,23 @@
 #   docker compose --env-file .env.prod pull
 #   docker compose --env-file .env.prod up -d
 
+# Docker's default json-file log driver has NO rotation — container logs
+# grow until the disk fills. Images are already pruned every deploy (see
+# .github/workflows/docker-publish.yml), so logs are the remaining
+# unbounded consumer on this 8GB box. Capped per container rather than
+# via /etc/docker/daemon.json so it ships through the normal pipeline and
+# needs no daemon restart.
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-epfo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a real password in .env.prod}
@@ -32,6 +45,7 @@ services:
   api:
     image: ${DOCKERHUB_USERNAME}/epfo-one-api:latest
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,6 +60,7 @@ services:
   web:
     image: ${DOCKERHUB_USERNAME}/epfo-one-web:latest
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       - api
     # NEXT_PUBLIC_API_URL is baked in at BUILD time (see apps/web/Dockerfile),
@@ -55,6 +70,7 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - "80:80"
       - "443:443"
