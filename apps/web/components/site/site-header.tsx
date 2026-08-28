@@ -166,7 +166,13 @@ export function SiteHeader() {
             ) : (
               !me.isLoading &&
               !employerMe.isLoading && (
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                // flexWrap + nowrap text: on a narrow screen these two
+                // pills stack onto their own rows instead of both staying
+                // on one row and having their TEXT wrap to two lines —
+                // which, combined with borderRadius:999, turned each pill
+                // into a distorted stretched capsule (found on an actual
+                // mobile-viewport check).
+                <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                   <Link
                     href="/login"
                     style={{
@@ -180,6 +186,7 @@ export function SiteHeader() {
                       borderRadius: 999,
                       padding: "9px 18px",
                       textDecoration: "none",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {L.employeeLogin}
@@ -197,6 +204,7 @@ export function SiteHeader() {
                       borderRadius: 999,
                       padding: "9px 18px",
                       textDecoration: "none",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {L.employerLogin}

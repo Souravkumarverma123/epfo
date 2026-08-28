@@ -65,7 +65,7 @@ function ClaimStatusContent({ claimNumber }: { claimNumber: string }) {
         </p>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)", gap: 64, alignItems: "start" }}>
+      <div className="two-col-layout">
         <div>
           <div style={{ border: `2px solid ${COLOR.ink}`, padding: "24px 28px", margin: "0 0 40px" }}>
             <p style={{ fontSize: 16, letterSpacing: "0.06em", textTransform: "uppercase", color: COLOR.muted, fontWeight: 700, margin: "0 0 8px" }}>

@@ -56,7 +56,7 @@ function HelpContent() {
           : "Most problems are one of these. Start with the closest match."}
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)", gap: 64, alignItems: "start" }}>
+      <div className="two-col-layout">
         <div>
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {TOPICS.map((topic, i) => (

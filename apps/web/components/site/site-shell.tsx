@@ -47,6 +47,24 @@ export function SiteShell({
             outline-offset: 0;
             box-shadow: 0 3px 0 0 ${COLOR.ink};
           }
+          /* Shared by every "main content + sidebar" page (Dashboard, Help,
+             Claim status): fixed 1.6fr/1fr side-by-side on desktop, but a
+             hard 1.6fr/1fr split never collapses on its own — below 800px
+             it was squeezing the main column (and its table) into ~140px
+             instead of stacking. Found by an actual mobile-viewport check,
+             not assumed. */
+          .two-col-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+            gap: 64px;
+            align-items: start;
+          }
+          @media (max-width: 800px) {
+            .two-col-layout {
+              grid-template-columns: 1fr;
+              gap: 32px;
+            }
+          }
         `}</style>
         <div className="epfo-site" style={{ background: COLOR.bg }}>
           <SiteHeader />

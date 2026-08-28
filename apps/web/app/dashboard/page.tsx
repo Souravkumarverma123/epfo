@@ -90,7 +90,7 @@ function DashboardContent({ fullName }: { fullName: string }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)", gap: 64, alignItems: "start" }}>
+      <div className="two-col-layout">
         <div>
           {d.tasks.length > 0 && (
             <>
