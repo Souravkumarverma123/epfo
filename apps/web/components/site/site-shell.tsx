@@ -65,6 +65,38 @@ export function SiteShell({
               gap: 32px;
             }
           }
+
+          /* Mobile chrome. The layout itself was already fluid (auto-fit
+             grids, tables in overflow wrappers) — what was wrong is that
+             phones got DESKTOP sizing: 40px page padding, 40px headings,
+             and a nav whose eight links wrapped onto five rows, so the
+             header alone filled the first screen and every page's content
+             started below the fold.
+
+             !important is load-bearing here, not laziness: these pages set
+             padding and font-size as inline styles (and the nav pulls
+             NAV_BASE from design/tokens.ts), which no plain selector can
+             override. Centralising it here beats editing twenty files. */
+          @media (max-width: 640px) {
+            .epfo-site main {
+              padding-left: 20px !important;
+              padding-right: 20px !important;
+              padding-top: 28px !important;
+            }
+            .epfo-site h1 {
+              font-size: 30px !important;
+              line-height: 1.2 !important;
+            }
+            .epfo-site h2 {
+              font-size: 22px !important;
+            }
+            /* Tighter nav so eight links wrap onto ~3 rows instead of 5. */
+            .epfo-site nav a {
+              padding: 10px 12px 8px !important;
+              font-size: 15px !important;
+              margin-right: 0 !important;
+            }
+          }
         `}</style>
         <div className="epfo-site" style={{ background: COLOR.bg }}>
           <SiteHeader />
