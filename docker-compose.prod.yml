@@ -1,0 +1,74 @@
+# Production compose file for the EC2 box. Pulls prebuilt images from
+# Docker Hub (built by .github/workflows/docker-publish.yml) rather than
+# building on the instance — the instance's only job is to run containers.
+#
+# Single-domain, path-based routing (see Caddyfile): the web app and the
+# API share one origin through Caddy, which is what lets the API's session
+# cookies work as ordinary same-site Secure cookies in production instead
+# of needing cross-site cookie config. Caddy also handles HTTPS for
+# DOMAIN automatically (Let's Encrypt) — no manual cert management.
+#
+# Usage on the EC2 box:
+#   cp .env.prod.example .env.prod   # fill in real values, once
+#   docker compose --env-file .env.prod pull
+#   docker compose --env-file .env.prod up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-epfo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a real password in .env.prod}
+      POSTGRES_DB: ${POSTGRES_DB:-epfo_one}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-epfo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: ${DOCKERHUB_USERNAME}/epfo-one-api:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-epfo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-epfo_one}
+      PORT: 8000
+      NODE_ENV: prod
+      BASE_URL: https://${DOMAIN}
+      WEB_ORIGIN: https://${DOMAIN}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+
+  web:
+    image: ${DOCKERHUB_USERNAME}/epfo-one-web:latest
+    restart: unless-stopped
+    depends_on:
+      - api
+    # NEXT_PUBLIC_API_URL is baked in at BUILD time (see apps/web/Dockerfile),
+    # not runtime — it's listed here only so `docker compose config` shows
+    # the full picture; changing it requires rebuilding the image.
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+    depends_on:
+      - web
+      - api
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

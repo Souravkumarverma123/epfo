@@ -2,7 +2,10 @@
  * Seed for the login + dashboard + passbook demo. Covers one member (Ananya
  * Rao) with three employments, real monthly contributions on the current
  * one across two financial years, and lump-sum ledger entries for the
- * earlier two (documented below).
+ * earlier two (documented below). Also seeds the three establishments
+ * (employer-login identities) matching those employments' establishmentCode
+ * — log in as Northline Systems (BGBNG00456780000123) to see Ananya Rao as
+ * a real, active employee on the employer dashboard.
  *
  * `postLedgerEntry` here mirrors
  * packages/application/repositories/ledger-repository.ts's `postEntry`
@@ -15,7 +18,7 @@
  */
 import "dotenv/config";
 import { db } from "./index";
-import { members, memberBalances, employments, contributions, ledgerEntries } from "./schema";
+import { members, memberBalances, employments, contributions, ledgerEntries, nominees, establishments } from "./schema";
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type * as schema from "./schema";
@@ -69,6 +72,19 @@ async function postLedgerEntry(
 async function seed() {
   const uan = "100234567890";
 
+  // Establishments are seeded unconditionally (onConflictDoNothing makes
+  // this safe to re-run) and BEFORE the member-exists early-return below —
+  // otherwise re-running this script on an already-seeded DB would never
+  // reach the employer-login demo data.
+  await db
+    .insert(establishments)
+    .values([
+      { establishmentCode: "BGBNG00456780000123", name: "Northline Systems Pvt Ltd", city: "Bengaluru" },
+      { establishmentCode: "BGBNG00398210000456", name: "Kaveri Retail Ltd", city: "Bengaluru" },
+      { establishmentCode: "BGBNG00287650000789", name: "Sunfield Tech LLP", city: "Bengaluru" },
+    ])
+    .onConflictDoNothing({ target: establishments.establishmentCode });
+
   const existing = await db.select().from(members).where(eq(members.uan, uan)).limit(1);
   if (existing.length > 0) {
     console.log(`Member with UAN ${uan} already exists, skipping.`);
@@ -96,6 +112,14 @@ async function seed() {
     memberId: member.id,
     currentBalancePaise: 0n,
     lastSequenceNumber: 0,
+  });
+
+  await db.insert(nominees).values({
+    memberId: member.id,
+    fullName: "Vikram Rao",
+    relationship: "SPOUSE",
+    sharePercentage: 100,
+    setOn: "2019-03-15",
   });
 
   const [current, kaveri, sunfield] = await db

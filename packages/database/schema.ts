@@ -9,7 +9,9 @@
  * ClaimTransition), audit (AuditEvent), idempotency (IdempotencyRecord),
  * outbox (OutboxEvent).
  *
- * Supporting, not in §11: auth (mock login), demo (failure-injection switches).
+ * Supporting, not in §11: auth (mock login), demo (failure-injection
+ * switches), nominee (real KYC concept, not in the original entity list),
+ * employer (the employer/establishment persona, also not in §11).
  */
 
 export * from "./models/member";
@@ -21,3 +23,5 @@ export * from "./models/idempotency";
 export * from "./models/outbox";
 export * from "./models/auth";
 export * from "./models/demo";
+export * from "./models/nominee";
+export * from "./models/employer";

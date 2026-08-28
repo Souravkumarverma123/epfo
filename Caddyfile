@@ -1,0 +1,23 @@
+{$DOMAIN} {
+	# API routes go to the api container; everything else goes to the
+	# Next.js app. Same origin for both -> the API's session cookies work
+	# as plain same-site Secure cookies, no cross-site cookie config needed.
+	handle /trpc/* {
+		reverse_proxy api:8000
+	}
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+	handle /docs* {
+		reverse_proxy api:8000
+	}
+	handle /openapi.json {
+		reverse_proxy api:8000
+	}
+	handle /health {
+		reverse_proxy api:8000
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}

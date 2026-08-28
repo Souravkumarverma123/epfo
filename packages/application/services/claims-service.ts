@@ -3,7 +3,10 @@ import {
   assertTransition,
   checkAmount,
   checkEligibility,
+  dependencyGateFor,
   formatClaimNumber,
+  isTerminal,
+  nextHappyPathStatus,
   timelineStateFor,
   totalServiceMonths,
   HAPPY_PATH,
@@ -19,8 +22,17 @@ import { LedgerRepository } from "../repositories/ledger-repository";
 import { ClaimsRepository, type ClaimRow, type ClaimTransitionRow } from "../repositories/claims-repository";
 import { IdempotencyRepository } from "../repositories/idempotency-repository";
 import { OutboxRepository } from "../repositories/outbox-repository";
+import { DependencyRepository } from "../repositories/dependency-repository";
 import type { Executor } from "../executor";
 import type { TransactionCallback } from "../transaction";
+
+/** How long a claim sits at one step before the next poll is allowed to
+ *  advance it — long enough to watch on screen, short enough for a live
+ *  demo. This stands in for Inngest's step scheduling (PRD Phase 4,
+ *  documented as not built): advancing on each status poll instead of a
+ *  background worker is a deliberate fit for a serverless deploy target,
+ *  where a long-running process isn't available anyway. */
+const STEP_INTERVAL_MS = 4000;
 
 export class ClaimNotFoundError extends Error {
   constructor() {
@@ -86,6 +98,7 @@ export class ClaimsService {
     private readonly claimsRepo: ClaimsRepository,
     private readonly idempotencyRepo: IdempotencyRepository,
     private readonly outboxRepo: OutboxRepository,
+    private readonly dependencyRepo: DependencyRepository,
     private readonly withTransaction: <T>(cb: TransactionCallback<T>) => Promise<T>,
   ) {}
 
@@ -240,15 +253,153 @@ export class ClaimsService {
     return { claim, replayed: false };
   }
 
-  async getStatus(memberId: string, claimNumber: string): Promise<ClaimStatusResult> {
-    const claim = await this.claimsRepo.findByClaimNumber(claimNumber);
-    if (!claim || claim.memberId !== memberId) throw new ClaimNotFoundError();
+  /**
+   * Advance a claim by at most one step, if it's due (PRD §14 stand-in —
+   * see STEP_INTERVAL_MS). Every legal transition here still goes through
+   * @repo/domain's `assertTransition`, so this can never put a claim in a
+   * state the state machine wouldn't otherwise allow — it's just what
+   * *decides* to call it, standing in for a workflow engine.
+   *
+   * Recovery works the same way real retries do: a step's dependency is
+   * remembered in `reasonCode` while the claim sits at FAILED_RETRYABLE, so
+   * the next call re-attempts exactly that step rather than starting over.
+   */
+  async advanceIfDue(claimId: string, now: Date = new Date()): Promise<ClaimRow> {
+    const claim = await this.claimsRepo.findById(claimId);
+    if (!claim) throw new ClaimNotFoundError();
 
+    const status = claim.status as ClaimStatus;
+    if (isTerminal(status)) return claim;
+    if (now.getTime() - claim.updatedAt.getTime() < STEP_INTERVAL_MS) return claim;
+
+    // While recovering, we're really still trying to clear the step that
+    // failed — remembered in reasonCode when we entered FAILED_RETRYABLE.
+    const attemptingStatus: ClaimStatus =
+      status === "FAILED_RETRYABLE" ? (claim.reasonCode as ClaimStatus) : status;
+
+    const gate = dependencyGateFor(attemptingStatus);
+    if (gate) {
+      const mode = await this.dependencyRepo.getMode(gate);
+      if (mode !== "UP") {
+        if (status !== "FAILED_RETRYABLE") {
+          assertTransition(status, "FAILED_RETRYABLE");
+          const failed = await this.claimsRepo.updateStatus({
+            claimId,
+            expectedVersion: claim.version,
+            toStatus: "FAILED_RETRYABLE",
+            reasonCode: attemptingStatus,
+            reasonDetail: `Waiting on ${gate} — currently ${mode}`,
+          });
+          await this.claimsRepo.insertTransition({
+            claimId,
+            fromStatus: status,
+            toStatus: "FAILED_RETRYABLE",
+            actorType: "SYSTEM",
+            note: `${gate} dependency is ${mode}`,
+          });
+          return failed;
+        }
+        return claim; // still down — nothing changes, we'll check again next poll
+      }
+    }
+
+    // Coming back from a recorded failure: first move back onto the happy
+    // path at the step we were attempting, so the next poll's dependency
+    // check (now passing) is what actually advances further. Two visible
+    // steps instead of silently jumping ahead.
+    if (status === "FAILED_RETRYABLE") {
+      assertTransition(status, attemptingStatus);
+      const resumed = await this.claimsRepo.updateStatus({
+        claimId,
+        expectedVersion: claim.version,
+        toStatus: attemptingStatus,
+        reasonCode: null,
+        reasonDetail: null,
+      });
+      await this.claimsRepo.insertTransition({
+        claimId,
+        fromStatus: status,
+        toStatus: attemptingStatus,
+        actorType: "SYSTEM",
+        note: gate ? `${gate} dependency recovered — resuming` : "Resuming",
+      });
+      return resumed;
+    }
+
+    const next = nextHappyPathStatus(status);
+    if (!next) return claim;
+
+    assertTransition(status, next);
+
+    if (next === "COMPLETED") {
+      // Completion is also a financial event: the claim amount actually
+      // leaves the member's balance here, in the same transaction as the
+      // status change — same discipline as every other ledger write.
+      return this.withTransaction(async (tx) => {
+        const claimsRepo = new ClaimsRepository(tx as Executor);
+        const ledgerRepo = new LedgerRepository(tx as Executor);
+
+        await ledgerRepo.postEntry({
+          memberId: claim.memberId,
+          transactionId: crypto.randomUUID(),
+          type: "WITHDRAWAL",
+          direction: "DEBIT",
+          amountPaise: claim.amountPaise,
+          reference: `Claim ${claim.claimNumber} completed`,
+        });
+
+        const completed = await claimsRepo.updateStatus({
+          claimId,
+          expectedVersion: claim.version,
+          toStatus: "COMPLETED",
+          completedAt: now,
+        });
+        await claimsRepo.insertTransition({
+          claimId,
+          fromStatus: status,
+          toStatus: "COMPLETED",
+          actorType: "SYSTEM",
+        });
+        return completed;
+      });
+    }
+
+    const advanced = await this.claimsRepo.updateStatus({
+      claimId,
+      expectedVersion: claim.version,
+      toStatus: next,
+    });
+    await this.claimsRepo.insertTransition({
+      claimId,
+      fromStatus: status,
+      toStatus: next,
+      actorType: "SYSTEM",
+    });
+    return advanced;
+  }
+
+  async getStatus(memberId: string, claimNumber: string): Promise<ClaimStatusResult> {
+    const found = await this.claimsRepo.findByClaimNumber(claimNumber);
+    if (!found || found.memberId !== memberId) throw new ClaimNotFoundError();
+
+    const claim = await this.advanceIfDue(found.id);
     const transitions = await this.claimsRepo.listTransitions(claim.id);
     const currentStatus = claim.status as ClaimStatus;
+
+    // FAILED_RETRYABLE/ACTION_REQUIRED aren't on HAPPY_PATH, so plugging
+    // them straight into timelineStateFor would blank every step back to
+    // "pending" — exactly the wrong look for "your claim is safe, we're
+    // still working on it". Show progress against the step it's actually
+    // retrying (remembered in reasonCode) instead, so earlier steps stay
+    // "done" and that one step reads as "active".
+    const timelineStatus: ClaimStatus =
+      (currentStatus === "FAILED_RETRYABLE" || currentStatus === "ACTION_REQUIRED") && claim.reasonCode
+        ? (claim.reasonCode as ClaimStatus)
+        : currentStatus;
+
     const timeline = HAPPY_PATH.map((status) => ({
       status,
-      state: timelineStateFor(status, currentStatus),
+      state: timelineStateFor(status, timelineStatus),
     }));
 
     return { claim, transitions, timeline };

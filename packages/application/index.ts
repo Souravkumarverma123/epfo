@@ -10,8 +10,14 @@ export * from "./repositories/ledger-repository";
 export * from "./repositories/claims-repository";
 export * from "./repositories/idempotency-repository";
 export * from "./repositories/outbox-repository";
+export * from "./repositories/nominee-repository";
+export * from "./repositories/dependency-repository";
+export * from "./repositories/establishment-repository";
+export * from "./repositories/employer-auth-repository";
 
 export * from "./services/auth-service";
 export * from "./services/member-service";
 export * from "./services/passbook-service";
 export * from "./services/claims-service";
+export * from "./services/employer-auth-service";
+export * from "./services/employer-service";

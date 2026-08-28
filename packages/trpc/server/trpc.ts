@@ -25,3 +25,13 @@ export const protectedProcedure = publicProcedure.use(({ ctx, next }) => {
   }
   return next({ ctx: { ...ctx, member: ctx.member } });
 });
+
+/** Same idea as protectedProcedure, for the employer persona — checks
+ *  ctx.employer instead of ctx.member. The two are independent: a request
+ *  can carry a member session, an employer session, both, or neither. */
+export const protectedEmployerProcedure = publicProcedure.use(({ ctx, next }) => {
+  if (!ctx.employer) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Employer sign in required" });
+  }
+  return next({ ctx: { ...ctx, employer: ctx.employer } });
+});

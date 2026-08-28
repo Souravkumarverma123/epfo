@@ -6,17 +6,25 @@ import {
   ClaimsRepository,
   ClaimsService,
   ContributionRepository,
+  DependencyRepository,
+  EmployerAuthRepository,
+  EmployerAuthService,
+  EmployerService,
   EmploymentRepository,
+  EstablishmentRepository,
   IdempotencyRepository,
   LedgerRepository,
   MemberRepository,
   MemberService,
+  NomineeRepository,
   OutboxRepository,
   PassbookService,
   withTransaction,
+  type EstablishmentRow,
   type MemberRow,
 } from "@repo/application";
 import { SESSION_COOKIE_NAME, parseCookies } from "./session-cookie";
+import { EMPLOYER_SESSION_COOKIE_NAME } from "./employer-session-cookie";
 
 /**
  * Every request's session is resolved once, here, before any procedure runs.
@@ -37,6 +45,11 @@ export interface Context {
   memberService: MemberService;
   passbookService: PassbookService;
   claimsService: ClaimsService;
+  dependencyRepo: DependencyRepository;
+  employerSessionId: string | null;
+  employer: EstablishmentRow | null;
+  employerAuthService: EmployerAuthService;
+  employerService: EmployerService;
 }
 
 export async function createContext({
@@ -52,12 +65,14 @@ export async function createContext({
     new EmploymentRepository(db),
     new ContributionRepository(db),
     new LedgerRepository(db),
+    new NomineeRepository(db),
   );
   const passbookService = new PassbookService(
     new EmploymentRepository(db),
     new ContributionRepository(db),
     new LedgerRepository(db),
   );
+  const dependencyRepo = new DependencyRepository(db);
   const claimsService = new ClaimsService(
     new EmploymentRepository(db),
     new ContributionRepository(db),
@@ -65,11 +80,18 @@ export async function createContext({
     new ClaimsRepository(db),
     new IdempotencyRepository(db),
     new OutboxRepository(db),
+    dependencyRepo,
     withTransaction,
   );
+  const employerAuthService = new EmployerAuthService(
+    new EstablishmentRepository(db),
+    new EmployerAuthRepository(db),
+  );
+  const employerService = new EmployerService(new EmploymentRepository(db));
 
   const cookies = parseCookies(req.headers.cookie);
   const sessionId = cookies[SESSION_COOKIE_NAME] ?? null;
+  const employerSessionId = cookies[EMPLOYER_SESSION_COOKIE_NAME] ?? null;
 
   let member: MemberRow | null = null;
   if (sessionId) {
@@ -83,7 +105,30 @@ export async function createContext({
     }
   }
 
-  return { req, res, sessionId, member, authService, memberService, passbookService, claimsService };
+  let employer: EstablishmentRow | null = null;
+  if (employerSessionId) {
+    try {
+      employer = await employerAuthService.resolveSession(employerSessionId);
+    } catch {
+      employer = null;
+    }
+  }
+
+  return {
+    req,
+    res,
+    sessionId,
+    member,
+    authService,
+    memberService,
+    passbookService,
+    claimsService,
+    dependencyRepo,
+    employerSessionId,
+    employer,
+    employerAuthService,
+    employerService,
+  };
 }
 
-export type { MemberRow };
+export type { MemberRow, EstablishmentRow };

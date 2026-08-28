@@ -28,11 +28,21 @@ export function SiteHeader() {
   const pathname = usePathname();
 
   const me = trpc.auth.me.useQuery();
+  const employerMe = trpc.employerAuth.me.useQuery();
   const utils = trpc.useUtils();
   const signOut = trpc.auth.signOut.useMutation({
     onSuccess: () => utils.auth.me.invalidate(),
   });
+  const employerSignOut = trpc.employerAuth.signOut.useMutation({
+    onSuccess: () => utils.employerAuth.me.invalidate(),
+  });
   const member = me.data?.member ?? null;
+  // Member and employer are independent sessions (see
+  // employer-session-cookie.ts) — a browser can hold both at once. The
+  // member identity takes visual priority in the header since it's the
+  // primary persona this site is built around; the employer identity shows
+  // only when there is no signed-in member.
+  const employer = employerMe.data?.establishment ?? null;
 
   return (
     <>
@@ -131,11 +141,67 @@ export function SiteHeader() {
                   {L.signout}
                 </button>
               </>
+            ) : employer ? (
+              <>
+                <span style={{ fontSize: 15, color: COLOR.muted }}>{employer.name}</span>
+                <span style={{ fontSize: 15, color: COLOR.border }}>|</span>
+                <button
+                  onClick={() => employerSignOut.mutate()}
+                  disabled={employerSignOut.isPending}
+                  style={{
+                    background: "none",
+                    border: 0,
+                    padding: 0,
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: COLOR.accent,
+                    textDecoration: "underline",
+                    textUnderlineOffset: 3,
+                    cursor: "pointer",
+                  }}
+                >
+                  {L.signout}
+                </button>
+              </>
             ) : (
-              !me.isLoading && (
-                <Link href="/login" style={{ fontSize: 15, fontWeight: 600 }}>
-                  {L.signin}
-                </Link>
+              !me.isLoading &&
+              !employerMe.isLoading && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <Link
+                    href="/login"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: COLOR.accent,
+                      border: `2px solid ${COLOR.accent}`,
+                      borderRadius: 999,
+                      padding: "9px 18px",
+                      textDecoration: "none",
+                    }}
+                  >
+                    {L.employeeLogin}
+                  </Link>
+                  <Link
+                    href="/employer/login"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: COLOR.ink,
+                      border: `2px solid ${COLOR.ink}`,
+                      borderRadius: 999,
+                      padding: "9px 18px",
+                      textDecoration: "none",
+                    }}
+                  >
+                    {L.employerLogin}
+                  </Link>
+                </div>
               )
             )}
           </div>

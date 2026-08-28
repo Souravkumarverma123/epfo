@@ -15,6 +15,20 @@
       "when": 1787890850035,
       "tag": "0001_greedy_shen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787893380692,
+      "tag": "0002_tough_earthquake",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787900048196,
+      "tag": "0003_reflective_franklin_storm",
+      "breakpoints": true
     }
   ]
 }

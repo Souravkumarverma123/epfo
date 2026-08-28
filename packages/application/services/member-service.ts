@@ -8,6 +8,7 @@ import { MemberRepository, type MemberRow } from "../repositories/member-reposit
 import { EmploymentRepository, type EmploymentRow } from "../repositories/employment-repository";
 import { ContributionRepository } from "../repositories/contribution-repository";
 import { LedgerRepository } from "../repositories/ledger-repository";
+import { NomineeRepository, type NomineeRow } from "../repositories/nominee-repository";
 
 export class MemberNotFoundError extends Error {
   constructor() {
@@ -44,7 +45,12 @@ export class MemberService {
     private readonly employmentRepo: EmploymentRepository,
     private readonly contributionRepo: ContributionRepository,
     private readonly ledgerRepo: LedgerRepository,
+    private readonly nomineeRepo: NomineeRepository,
   ) {}
+
+  async listNominees(memberId: string): Promise<NomineeRow[]> {
+    return this.nomineeRepo.listByMember(memberId);
+  }
 
   async getDashboardSummary(memberId: string, now: Date = new Date()): Promise<DashboardSummary> {
     const member = await this.memberRepo.findById(memberId);

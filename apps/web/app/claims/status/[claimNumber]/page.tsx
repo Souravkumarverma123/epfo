@@ -10,9 +10,24 @@ import { COLOR } from "~/design/tokens";
 import { useLang } from "~/design/lang";
 import { Button } from "~/components/ui/button";
 
+/** Every non-terminal claim is polled at this cadence so the citizen sees
+ *  progress (or a recovery) happen live, without reloading — the frontend
+ *  half of the same PRD §14 stand-in ClaimsService.advanceIfDue drives on
+ *  the backend. Stops polling once the claim reaches a terminal state. */
+const POLL_INTERVAL_MS = 3000;
+const TERMINAL_STATUSES = new Set(["COMPLETED", "REJECTED", "CANCELLED", "FAILED_PERMANENT"]);
+
 function ClaimStatusContent({ claimNumber }: { claimNumber: string }) {
   const { lang } = useLang();
-  const status = trpc.claims.getStatus.useQuery({ claimNumber });
+  const status = trpc.claims.getStatus.useQuery(
+    { claimNumber },
+    {
+      refetchInterval: (query) => {
+        const currentStatus = query.state.data?.status;
+        return currentStatus && TERMINAL_STATUSES.has(currentStatus) ? false : POLL_INTERVAL_MS;
+      },
+    },
+  );
 
   if (status.isLoading) {
     return <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>Loading...</main>;
@@ -39,10 +54,16 @@ function ClaimStatusContent({ claimNumber }: { claimNumber: string }) {
       <h1 style={{ fontSize: 40, lineHeight: 1.15, fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 12px" }}>
         {lang === "hi" ? "दावा" : "Claim"} {d.claimNumber}
       </h1>
-      <p style={{ fontSize: 20, color: COLOR.muted, margin: "0 0 36px" }}>
+      <p style={{ fontSize: 20, color: COLOR.muted, margin: "0 0 12px" }}>
         {formatINR(parsePaiseWire(d.amountPaise))}
         {d.submittedAt ? `, ${lang === "hi" ? "जमा किया गया" : "submitted"} ${new Date(d.submittedAt).toLocaleDateString(lang === "hi" ? "hi-IN" : "en-IN")}` : ""}
       </p>
+      {!TERMINAL_STATUSES.has(d.status) && (
+        <p style={{ fontSize: 14, color: COLOR.muted, margin: "0 0 36px", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: COLOR.accent, display: "inline-block" }} />
+          {lang === "hi" ? "लाइव — यह पृष्ठ अपने आप अपडेट होता है" : "Live — this page updates on its own"}
+        </p>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(0,1fr)", gap: 64, alignItems: "start" }}>
         <div>
@@ -110,6 +131,20 @@ function ClaimStatusContent({ claimNumber }: { claimNumber: string }) {
               {lang === "hi" ? "शिकायत दर्ज करें" : "Raise a grievance"}
             </Button>
           </Link>
+
+          {!TERMINAL_STATUSES.has(d.status) && (
+            <>
+              <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: COLOR.muted, borderTop: `2px solid ${COLOR.ink}`, paddingTop: 16, margin: "40px 0 12px" }}>
+                Demo
+              </h2>
+              <p style={{ fontSize: 15, lineHeight: 1.5, color: COLOR.muted, margin: "0 0 12px" }}>
+                Watching for a dependency failure to demo? Open the control panel in another tab.
+              </p>
+              <Link href="/demo/dependencies" style={{ fontSize: 16, fontWeight: 600 }}>
+                Dependency controls →
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </main>

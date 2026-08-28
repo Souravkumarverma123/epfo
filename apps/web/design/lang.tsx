@@ -27,20 +27,29 @@ export function useLang(): LangContextValue {
 /** Common chrome strings (header/footer). Page content keeps its own copy. */
 export const CHROME_COPY: Record<
   Locale,
-  { langSwitch: string; helpline: string; service: string; signout: string; signin: string }
+  {
+    langSwitch: string;
+    helpline: string;
+    service: string;
+    signout: string;
+    employeeLogin: string;
+    employerLogin: string;
+  }
 > = {
   en: {
     langSwitch: "हिन्दी में देखें",
     helpline: "Helpline 1800 118 005",
     service: " Employee Provident Fund Organisation",
     signout: "Sign out",
-    signin: "Sign in",
+    employeeLogin: "Employee Login",
+    employerLogin: "Employer Login",
   },
   hi: {
     langSwitch: "View in English",
     helpline: "हेल्पलाइन 1800 118 005",
     service: "ईपीएफओ ऑनलाइन",
     signout: "साइन आउट",
-    signin: "साइन इन करें",
+    employeeLogin: "कर्मचारी लॉगिन",
+    employerLogin: "नियोक्ता लॉगिन",
   },
 };

@@ -4,7 +4,19 @@ import Link from "next/link";
 import { COLOR } from "~/design/tokens";
 import { useLang } from "~/design/lang";
 
-const FOOTER_COLUMNS = [
+interface FooterLinkItem {
+  label: { en: string; hi: string };
+  /** null = not built in this prototype (rendered inert via FooterLink
+   *  below). Nothing currently uses null — every link here is real — but
+   *  the type is kept so a future addition can honestly opt out of it. */
+  href: string | null;
+}
+interface FooterColumn {
+  title: { en: string; hi: string };
+  links: FooterLinkItem[];
+}
+
+const FOOTER_COLUMNS: FooterColumn[] = [
   {
     title: { en: "Services", hi: "सेवाएँ" },
     links: [
@@ -16,20 +28,38 @@ const FOOTER_COLUMNS = [
   {
     title: { en: "About", hi: "परिचय" },
     links: [
-      { label: { en: "What EPFO does", hi: "EPFO क्या करता है" }, href: "#" },
-      { label: { en: "Acts, schemes and circulars", hi: "अधिनियम, योजनाएँ और परिपत्र" }, href: "#" },
-      { label: { en: "Right to Information", hi: "सूचना का अधिकार" }, href: "#" },
+      { label: { en: "What EPFO does", hi: "EPFO क्या करता है" }, href: "/about" },
+      { label: { en: "Acts, schemes and circulars", hi: "अधिनियम, योजनाएँ और परिपत्र" }, href: "/schemes" },
+      { label: { en: "Right to Information", hi: "सूचना का अधिकार" }, href: "/rti" },
     ],
   },
   {
     title: { en: "This site", hi: "यह साइट" },
     links: [
-      { label: { en: "Accessibility statement", hi: "सुगम्यता विवरण" }, href: "#" },
-      { label: { en: "Privacy", hi: "गोपनीयता" }, href: "#" },
-      { label: { en: "Give feedback on this page", hi: "इस पेज पर प्रतिक्रिया दें" }, href: "#" },
+      { label: { en: "Accessibility statement", hi: "सुगम्यता विवरण" }, href: "/accessibility" },
+      { label: { en: "Privacy", hi: "गोपनीयता" }, href: "/privacy" },
+      { label: { en: "Give feedback on this page", hi: "इस पेज पर प्रतिक्रिया दें" }, href: "/feedback" },
     ],
   },
-] as const;
+];
+
+function FooterLink({ href, label }: { href: string | null; label: string }) {
+  if (href) return <Link href={href}>{label}</Link>;
+  return (
+    <span
+      title="Not available in this prototype yet"
+      style={{
+        color: COLOR.muted,
+        cursor: "not-allowed",
+        textDecoration: "underline",
+        textDecorationColor: COLOR.border,
+        textUnderlineOffset: 3,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
 
 export function SiteFooter() {
   const { lang } = useLang();
@@ -62,8 +92,8 @@ export function SiteFooter() {
             </h2>
             <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
               {col.links.map((link) => (
-                <li key={link.href + link.label.en} style={{ fontSize: 17 }}>
-                  <Link href={link.href}>{link.label[lang]}</Link>
+                <li key={link.href ?? link.label.en} style={{ fontSize: 17 }}>
+                  <FooterLink href={link.href} label={link.label[lang]} />
                 </li>
               ))}
             </ul>

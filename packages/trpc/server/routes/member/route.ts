@@ -1,10 +1,40 @@
-import { paiseToWire } from "@repo/domain";
+import { nomineeRelationshipLabel, paiseToWire } from "@repo/domain";
 import { protectedProcedure, router } from "../../trpc";
 import { zodUndefinedModel } from "../../schema";
 import { dashboardSummarySchema, type DashboardSummaryWire } from "./schema";
 import { passbookInputSchema, passbookOutputSchema, type PassbookOutputWire } from "./passbook-schema";
+import { memberProfileDetailSchema, type MemberProfileDetailWire } from "./profile-schema";
 
 export const memberRouter = router({
+  // Most fields come straight off ctx.member (already resolved once per
+  // request in context.ts) — only nominees need a repository call, since
+  // they live in their own table.
+  getProfile: protectedProcedure
+    .meta({ openapi: { method: "GET", path: "/member/profile" } })
+    .input(zodUndefinedModel)
+    .output(memberProfileDetailSchema)
+    .query(async ({ ctx }): Promise<MemberProfileDetailWire> => {
+      const m = ctx.member;
+      const nominees = await ctx.memberService.listNominees(m.id);
+      return {
+        fullName: m.fullName,
+        dateOfBirth: m.dateOfBirth,
+        maskedAadhaar: m.maskedAadhaar,
+        maskedPan: m.maskedPan,
+        kycStatus: m.kycStatus,
+        mobile: m.mobile,
+        email: m.email,
+        bankAccountMasked: m.bankAccountMasked,
+        bankIfsc: m.bankIfsc,
+        nominees: nominees.map((n) => ({
+          fullName: n.fullName,
+          relationship: nomineeRelationshipLabel(n.relationship),
+          sharePercentage: n.sharePercentage,
+          setOn: n.setOn,
+        })),
+      };
+    }),
+
   getDashboardSummary: protectedProcedure
     .meta({ openapi: { method: "GET", path: "/member/dashboard" } })
     .input(zodUndefinedModel)
