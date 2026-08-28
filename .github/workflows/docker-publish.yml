@@ -75,3 +75,10 @@ jobs:
             git pull
             docker compose -f docker-compose.prod.yml --env-file .env.prod pull
             docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+            # The instance's disk is small (8GB) and every deploy leaves
+            # the previous images' layers behind — ran out of space on a
+            # real deploy once already. Prune anything not in use by a
+            # running container, after the new stack is already up so
+            # nothing active gets touched.
+            docker image prune -a -f
+            docker builder prune -a -f
