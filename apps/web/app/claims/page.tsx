@@ -79,6 +79,13 @@ function ClaimsWizard() {
   const [confirmed, setConfirmed] = useState(false);
   const [submittedClaimNumber, setSubmittedClaimNumber] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // How many times the citizen pressed Submit for this one claim, and how many
+  // of those presses the server absorbed instead of duplicating (PRD §47
+  // step 10: "citizen clicks Submit five times; exactly one claim exists").
+  // Counted so the guarantee is something they can see, not just something
+  // that quietly held in the database.
+  const [attempts, setAttempts] = useState(0);
+  const [absorbed, setAbsorbed] = useState(0);
 
   // Stable across retries of the same logical submit — created once when
   // the wizard starts, not regenerated on every render (PRD §16).
@@ -95,11 +102,23 @@ function ClaimsWizard() {
   const submit = trpc.claims.submit.useMutation({
     onSuccess: (data) => {
       setSubmittedClaimNumber(data.claimNumber);
+      // `replayed` means this exact request had already completed, so the
+      // server handed back the first claim rather than creating a second.
+      if (data.replayed) setAbsorbed((n) => n + 1);
       setStep(4);
       setError(null);
       utils.claims.list.invalidate();
     },
-    onError: (err) => setError(err.message),
+    onError: (err) => {
+      // Not a failure: an identical request with this key is still in
+      // flight, so this press was refused rather than allowed to duplicate
+      // the claim. The first press is still on its way to succeeding.
+      if (err.data?.code === "TOO_MANY_REQUESTS") {
+        setAbsorbed((n) => n + 1);
+        return;
+      }
+      setError(err.message);
+    },
   });
 
   const maxAmountPaise = eligibility.data ? parsePaiseWire(eligibility.data.maxAmountPaise) : 0n;
@@ -274,17 +293,23 @@ function ClaimsWizard() {
           </label>
           {error && <p style={{ fontSize: 16, color: "#8a2321", margin: "0 0 20px" }}>{error}</p>}
           <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+            {/* Deliberately NOT disabled while the request is in flight. In
+                this system pressing again is safe — the idempotency key makes
+                every extra press collapse onto the same claim — and a citizen
+                on a slow connection pressing again is exactly the case that
+                creates duplicates on the real portal. */}
             <Button
               className={primaryButtonClass}
-              disabled={!confirmed || submit.isPending}
-              onClick={() =>
+              disabled={!confirmed}
+              onClick={() => {
+                setAttempts((n) => n + 1);
                 submit.mutate({
                   type: choice.type,
                   purpose: choice.purpose,
                   amountPaise: amountPaise.toString(),
                   idempotencyKey,
-                })
-              }
+                });
+              }}
             >
               {submit.isPending ? (lang === "hi" ? "जमा हो रहा है..." : "Submitting...") : lang === "hi" ? "दावा जमा करें" : "Submit claim"}
             </Button>
@@ -292,6 +317,13 @@ function ClaimsWizard() {
               {lang === "hi" ? "वापस" : "Back"}
             </Button>
           </div>
+          {submit.isPending && (
+            <p style={{ fontSize: 17, lineHeight: 1.55, color: COLOR.mutedDark, margin: "18px 0 0" }}>
+              {lang === "hi"
+                ? "दोबारा दबाना सुरक्षित है — इससे दूसरा दावा नहीं बनेगा।"
+                : "Pressing again is safe. It will not create a second claim."}
+            </p>
+          )}
         </div>
       )}
 
@@ -308,6 +340,24 @@ function ClaimsWizard() {
               {submittedClaimNumber}
             </p>
           </div>
+
+          {/* Only shown when it actually happened — the counts are real, not
+              an illustration. PRD §47 step 10 made visible to the citizen. */}
+          {absorbed > 0 && (
+            <div style={{ border: `2px solid ${COLOR.ink}`, padding: "24px 28px", margin: "0 0 36px" }}>
+              <p style={{ fontSize: 20, fontWeight: 700, margin: "0 0 8px" }}>
+                {lang === "hi"
+                  ? `आपने जमा करें ${attempts} बार दबाया।`
+                  : `You pressed Submit ${attempts} times.`}
+              </p>
+              <p style={{ fontSize: 18, lineHeight: 1.55, color: COLOR.mutedDark, margin: 0 }}>
+                {lang === "hi"
+                  ? "हमने एक ही दावा बनाया। बाकी दबाव पहचान लिए गए और अनदेखा कर दिए गए — आपके पैसे दो बार नहीं निकाले जाएंगे।"
+                  : "We created one claim. The extra presses were recognised as the same request and ignored, so your money is never withdrawn twice."}
+              </p>
+            </div>
+          )}
+
           <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.015em", margin: "0 0 16px" }}>
             {lang === "hi" ? "आगे क्या होगा" : "What happens next"}
           </h2>
