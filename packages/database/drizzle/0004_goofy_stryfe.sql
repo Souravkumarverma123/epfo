@@ -1,0 +1,1 @@
+ALTER TABLE "members" ADD COLUMN "guardian_name" text;

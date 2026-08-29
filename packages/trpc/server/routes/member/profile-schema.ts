@@ -12,6 +12,7 @@ export const nomineeSchema = z.object({
 export const memberProfileDetailSchema = z.object({
   fullName: z.string(),
   dateOfBirth: z.string(),
+  guardianName: z.string().nullable(),
   maskedAadhaar: z.string().nullable(),
   maskedPan: z.string().nullable(),
   kycStatus: z.string(),

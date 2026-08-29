@@ -19,6 +19,7 @@ export const memberRouter = router({
       return {
         fullName: m.fullName,
         dateOfBirth: m.dateOfBirth,
+        guardianName: m.guardianName,
         maskedAadhaar: m.maskedAadhaar,
         maskedPan: m.maskedPan,
         kycStatus: m.kycStatus,

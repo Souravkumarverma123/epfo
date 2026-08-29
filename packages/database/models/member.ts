@@ -14,6 +14,10 @@ export const members = pgTable(
     uan: text("uan").notNull(),
     fullName: text("full_name").notNull(),
     dateOfBirth: text("date_of_birth").notNull(), // ISO date
+    /** "Father's Name / Husband's Name" on the real UAN card. Nullable —
+     *  unlike the identity fields above, this one has no synthetic-KYC
+     *  story that requires it to always be set. */
+    guardianName: text("guardian_name"),
     maskedAadhaar: text("masked_aadhaar"),
     maskedPan: text("masked_pan"),
     mobile: text("mobile").notNull(),

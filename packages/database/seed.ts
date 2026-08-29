@@ -97,6 +97,10 @@ async function seed() {
       uan,
       fullName: "Ananya Rao",
       dateOfBirth: "1993-02-07",
+      // Matches the SPOUSE nominee seeded below — the same person, not a
+      // coincidence: on a real UAN card this field is "Husband's Name" for
+      // a married woman, and Ananya's nominee IS her husband.
+      guardianName: "Vikram Rao",
       maskedAadhaar: "XXXX-XXXX-6612",
       maskedPan: null, // deliberately missing -> drives the "Add your PAN" task
       mobile: "+919876548821",

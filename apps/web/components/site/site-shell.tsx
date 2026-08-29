@@ -122,14 +122,32 @@ export function SiteShell({
               margin-right: 0 !important;
             }
           }
+
+          /* Generic "hide site chrome on paper" utility — used by the UAN
+             card page so a real browser print/Save-as-PDF shows only the
+             card, not the header, nav, footer and assistant bubble around
+             it. A page opts individual elements in by adding this class;
+             nothing is hidden by default, so every other page's print
+             output is unaffected. */
+          @media print {
+            .epfo-print-hide {
+              display: none !important;
+            }
+            .epfo-site main {
+              padding: 24px !important;
+              max-width: none !important;
+            }
+          }
         `}</style>
         <div className="epfo-site" style={{ background: COLOR.bg }}>
-          <a href="#main-content" className="epfo-skip-link">
+          <a href="#main-content" className="epfo-skip-link epfo-print-hide">
             Skip to main content
           </a>
-          <SiteHeader />
+          <div className="epfo-print-hide">
+            <SiteHeader />
+          </div>
           {showPrototypeBanner && (
-            <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 40px 0" }}>
+            <div className="epfo-print-hide" style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 40px 0" }}>
               <div
                 style={{
                   display: "flex",
@@ -159,8 +177,10 @@ export function SiteShell({
             </div>
           )}
           {children}
-          <SiteFooter />
-          <AiAssistant />
+          <div className="epfo-print-hide">
+            <SiteFooter />
+            <AiAssistant />
+          </div>
         </div>
       </div>
     </LangProvider>

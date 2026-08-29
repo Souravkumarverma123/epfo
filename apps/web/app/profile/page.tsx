@@ -101,11 +101,16 @@ function ProfileContent() {
       <h1 style={{ fontSize: 40, lineHeight: 1.15, fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
         {t("Your details", "आपकी जानकारी")}
       </h1>
-      <p style={{ fontSize: 20, lineHeight: 1.5, color: COLOR.muted, maxWidth: 640, margin: "0 0 40px" }}>
+      <p style={{ fontSize: 20, lineHeight: 1.5, color: COLOR.muted, maxWidth: 640, margin: "0 0 24px" }}>
         {t(
           "Claims are paid faster when these match your bank and Aadhaar records.",
           "दावे तेज़ी से तब भुगतान होते हैं जब ये आपके बैंक और आधार रिकॉर्ड से मेल खाते हैं।",
         )}
+      </p>
+      <p style={{ margin: "0 0 40px" }}>
+        <Link href="/uan-card" style={{ fontSize: 18, fontWeight: 700 }}>
+          {t("View your UAN card →", "अपना UAN कार्ड देखें →")}
+        </Link>
       </p>
 
       <div style={{ maxWidth: 900 }}>
