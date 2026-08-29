@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, ledgerEntries, memberBalances, or } from "@repo/database";
+import { and, desc, eq, isNull, ledgerEntries, memberBalances, or, sql } from "@repo/database";
 import { BaseRepository } from "./base-repository";
 import type { Executor } from "../executor";
 
@@ -131,5 +131,43 @@ export class LedgerRepository extends BaseRepository {
       .where(eq(memberBalances.memberId, entry.memberId));
 
     return ledgerRow;
+  }
+
+  /**
+   * Reconciliation (PRD §12 "build reconciliation capabilities between source
+   * and derived balances", §34, §48).
+   *
+   * `member_balances.current_balance_paise` is a derived, mutable convenience
+   * for fast reads. The authoritative figure is the ledger itself: credits
+   * minus debits. This recomputes the second from scratch and reports any
+   * member where the two disagree. A non-empty result is a bug, not a
+   * business condition — which is exactly why it is worth showing an operator
+   * rather than trusting it silently.
+   */
+  async reconcileBalances(): Promise<
+    Array<{
+      memberId: string;
+      derivedBalancePaise: bigint;
+      ledgerBalancePaise: bigint;
+      entryCount: number;
+    }>
+  > {
+    const rows = await this.executor
+      .select({
+        memberId: memberBalances.memberId,
+        derivedBalancePaise: memberBalances.currentBalancePaise,
+        ledgerBalancePaise: sql<string>`coalesce(sum(case when ${ledgerEntries.direction} = 'CREDIT' then ${ledgerEntries.amountPaise} else -${ledgerEntries.amountPaise} end), 0)`,
+        entryCount: sql<string>`count(${ledgerEntries.id})`,
+      })
+      .from(memberBalances)
+      .leftJoin(ledgerEntries, eq(ledgerEntries.memberId, memberBalances.memberId))
+      .groupBy(memberBalances.memberId, memberBalances.currentBalancePaise);
+
+    return rows.map((r) => ({
+      memberId: r.memberId,
+      derivedBalancePaise: r.derivedBalancePaise,
+      ledgerBalancePaise: BigInt(r.ledgerBalancePaise),
+      entryCount: Number(r.entryCount),
+    }));
   }
 }

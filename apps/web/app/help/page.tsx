@@ -46,7 +46,7 @@ function HelpContent() {
   const { lang } = useLang();
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
+    <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
       <h1 style={{ fontSize: 40, lineHeight: 1.15, fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
         {lang === "hi" ? "सहायता प्राप्त करें" : "Get help"}
       </h1>

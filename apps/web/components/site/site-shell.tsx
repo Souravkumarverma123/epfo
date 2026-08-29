@@ -42,10 +42,35 @@ export function SiteShell({
           .epfo-site button {
             font-family: inherit;
           }
+          /* WCAG 2.2 A, 2.4.1 Bypass Blocks. Off-screen until focused, then
+             pinned to the top-left as the first thing a keyboard user reaches
+             — so the header's nav can be skipped instead of tabbed through on
+             every page. */
+          .epfo-skip-link {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            z-index: 100;
+            background: ${COLOR.ink};
+            color: ${COLOR.white};
+            padding: 14px 20px;
+            font-size: 17px;
+            font-weight: 700;
+            text-decoration: none;
+          }
+          .epfo-skip-link:focus {
+            left: 0;
+          }
+          /* GOV.UK-style focus: yellow bar, dark edge. The yellow alone is
+             1.60:1 against this page background, well under the 3:1 that
+             WCAG 1.4.11 asks of a focus indicator — the contrast has to come
+             from the dark ring. It used to sit only along the bottom edge
+             (0 3px), so focus on the left, right or top edge of a control
+             had no compliant boundary at all. Now it surrounds. */
           .epfo-site :focus-visible {
             outline: 3px solid #ffbf47;
             outline-offset: 0;
-            box-shadow: 0 3px 0 0 ${COLOR.ink};
+            box-shadow: 0 0 0 6px ${COLOR.ink};
           }
           /* Shared by every "main content + sidebar" page (Dashboard, Help,
              Claim status): fixed 1.6fr/1fr side-by-side on desktop, but a
@@ -99,6 +124,9 @@ export function SiteShell({
           }
         `}</style>
         <div className="epfo-site" style={{ background: COLOR.bg }}>
+          <a href="#main-content" className="epfo-skip-link">
+            Skip to main content
+          </a>
           <SiteHeader />
           {showPrototypeBanner && (
             <div style={{ maxWidth: 1100, margin: "0 auto", padding: "20px 40px 0" }}>

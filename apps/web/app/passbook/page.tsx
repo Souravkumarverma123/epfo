@@ -31,11 +31,11 @@ function PassbookContent({ memberUan }: { memberUan: string }) {
   const isLoading = initial.isLoading;
 
   if (isLoading) {
-    return <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>Loading...</main>;
+    return <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>Loading...</main>;
   }
   if (!data) {
     return (
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>
+      <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>
         <p style={{ color: "#8a2321" }}>
           {lang === "hi" ? "पासबुक लोड नहीं हो सकी।" : "Could not load your passbook."}
         </p>
@@ -56,7 +56,7 @@ function PassbookContent({ memberUan }: { memberUan: string }) {
   };
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
+    <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
       <p style={{ fontSize: 17, margin: "0 0 20px" }}>
         <Link href="/dashboard">{lang === "hi" ? "आपके खाते पर वापस" : "Back to your account"}</Link>
       </p>
@@ -70,10 +70,11 @@ function PassbookContent({ memberUan }: { memberUan: string }) {
 
       <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-end", borderBottom: `1px solid ${COLOR.border}`, paddingBottom: 24, margin: "0 0 8px" }}>
         <div>
-          <label style={{ display: "block", fontSize: 16, fontWeight: 700, margin: "0 0 6px" }}>
+          <label htmlFor="passbook-fy" style={{ display: "block", fontSize: 16, fontWeight: 700, margin: "0 0 6px" }}>
             {lang === "hi" ? "वित्तीय वर्ष" : "Financial year"}
           </label>
           <select
+            id="passbook-fy"
             style={selectStyle}
             value={financialYear ?? data.selectedFinancialYear}
             onChange={(e) => setFinancialYear(e.target.value)}
@@ -86,10 +87,11 @@ function PassbookContent({ memberUan }: { memberUan: string }) {
           </select>
         </div>
         <div>
-          <label style={{ display: "block", fontSize: 16, fontWeight: 700, margin: "0 0 6px" }}>
+          <label htmlFor="passbook-employer" style={{ display: "block", fontSize: 16, fontWeight: 700, margin: "0 0 6px" }}>
             {lang === "hi" ? "नियोक्ता" : "Employer"}
           </label>
           <select
+            id="passbook-employer"
             style={selectStyle}
             value={employmentId ?? data.selectedEmploymentId}
             onChange={(e) => {
@@ -132,7 +134,7 @@ function PassbookContent({ memberUan }: { memberUan: string }) {
                 lang === "hi" ? "पेंशन (EPS)" : "Pension (EPS)",
                 lang === "hi" ? "बैलेंस" : "Balance",
               ].map((h, i) => (
-                <th
+                <th scope="col"
                   key={h}
                   style={{
                     textAlign: i === 0 ? "left" : "right",

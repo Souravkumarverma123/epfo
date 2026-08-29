@@ -136,7 +136,7 @@ function ClaimsWizard() {
   ];
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
+    <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
       <p style={{ fontSize: 16, letterSpacing: "0.06em", textTransform: "uppercase", color: COLOR.muted, fontWeight: 700, margin: "0 0 10px" }}>
         {stepLabels[step - 1]}
       </p>
@@ -212,7 +212,7 @@ function ClaimsWizard() {
                   {formatINR(maxAmountPaise)}
                 </p>
               </div>
-              <label style={{ display: "block", fontSize: 19, fontWeight: 700, margin: "0 0 6px" }}>
+              <label htmlFor="claim-amount" style={{ display: "block", fontSize: 19, fontWeight: 700, margin: "0 0 6px" }}>
                 {lang === "hi" ? "राशि" : "Amount"}
               </label>
               <p style={{ fontSize: 16, color: COLOR.muted, margin: "0 0 10px" }}>
@@ -223,6 +223,8 @@ function ClaimsWizard() {
                   ₹
                 </span>
                 <input
+                  id="claim-amount"
+                  inputMode="numeric"
                   value={amountRupees}
                   onChange={(e) => setAmountRupees(e.target.value.replace(/[^\d]/g, ""))}
                   style={{ flex: 1, border: 0, padding: "14px 16px", fontFamily: "inherit", fontSize: 22, color: COLOR.ink, background: COLOR.white, outline: "none", minWidth: 0 }}

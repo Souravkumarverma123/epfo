@@ -64,7 +64,7 @@ function EmployerLoginContent() {
     "!bg-transparent !text-[#262f8c] !underline !underline-offset-[3px] !p-0 !h-auto !font-semibold hover:!bg-transparent hover:!text-[#12174a]";
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
+    <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
       <div
         style={{
           display: "grid",
@@ -80,7 +80,7 @@ function EmployerLoginContent() {
 
           {step === "code" ? (
             <>
-              <label style={{ display: "block", fontSize: 18, fontWeight: 700, margin: "0 0 6px" }}>
+              <label htmlFor="employer-establishment-code" style={{ display: "block", fontSize: 18, fontWeight: 700, margin: "0 0 6px" }}>
                 {lang === "hi" ? "प्रतिष्ठान कोड" : "Establishment code"}
               </label>
               <p style={{ fontSize: 16, color: COLOR.muted, margin: "0 0 8px" }}>
@@ -89,6 +89,8 @@ function EmployerLoginContent() {
                   : "It is on your establishment's registration documents."}
               </p>
               <input
+                id="employer-establishment-code"
+                autoComplete="off"
                 value={establishmentCode}
                 onChange={(e) => setEstablishmentCode(e.target.value)}
                 placeholder="BGBNG00456780000123"
@@ -125,10 +127,10 @@ function EmployerLoginContent() {
                   ? `प्रतिष्ठान कोड ${establishmentCode} के लिए भेजा गया 6 अंकों का कोड दर्ज करें।`
                   : `Enter the 6-digit code sent for establishment ${establishmentCode}.`}
               </p>
-              <label style={{ display: "block", fontSize: 18, fontWeight: 700, margin: "20px 0 10px" }}>
+              <span id="employer-otp-label" style={{ display: "block", fontSize: 18, fontWeight: 700, margin: "20px 0 10px" }}>
                 {lang === "hi" ? "वन-टाइम कोड" : "One-time code"}
-              </label>
-              <div style={{ margin: "0 0 16px" }}>
+              </span>
+              <div role="group" aria-labelledby="employer-otp-label" style={{ margin: "0 0 16px" }}>
                 <InputOTP maxLength={6} value={otp} onChange={setOtp}>
                   <InputOTPGroup>
                     {[0, 1, 2, 3, 4, 5].map((i) => (

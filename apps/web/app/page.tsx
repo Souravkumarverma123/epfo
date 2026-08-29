@@ -97,7 +97,7 @@ function HomeContent() {
   const { lang } = useLang();
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 40px 96px" }}>
+    <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 40px 96px" }}>
       <h1
         style={{
           fontSize: 48,
@@ -118,6 +118,7 @@ function HomeContent() {
 
       <div style={{ border: `2px solid ${COLOR.ink}`, display: "flex", maxWidth: 640, margin: "0 0 16px" }}>
         <input
+          aria-label={lang === "hi" ? "सेवाएँ, फ़ॉर्म और मार्गदर्शन खोजें" : "Search services, forms and guidance"}
           placeholder={lang === "hi" ? "सेवाएँ, फ़ॉर्म और मार्गदर्शन खोजें" : "Search services, forms and guidance"}
           style={{
             flex: 1,

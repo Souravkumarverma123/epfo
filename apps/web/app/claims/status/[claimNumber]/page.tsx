@@ -30,11 +30,11 @@ function ClaimStatusContent({ claimNumber }: { claimNumber: string }) {
   );
 
   if (status.isLoading) {
-    return <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>Loading...</main>;
+    return <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>Loading...</main>;
   }
   if (status.isError || !status.data) {
     return (
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>
+      <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>
         <p style={{ color: "#8a2321" }}>
           {lang === "hi" ? "यह दावा नहीं मिला।" : "This claim could not be found."}
         </p>
@@ -47,7 +47,7 @@ function ClaimStatusContent({ claimNumber }: { claimNumber: string }) {
   const copy = statusCopy(currentStatus, lang);
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
+    <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
       <p style={{ fontSize: 17, margin: "0 0 20px" }}>
         <Link href="/dashboard">{lang === "hi" ? "आपके खाते पर वापस" : "Back to your account"}</Link>
       </p>
@@ -142,6 +142,12 @@ function ClaimStatusContent({ claimNumber }: { claimNumber: string }) {
               </p>
               <Link href="/demo/dependencies" style={{ fontSize: 16, fontWeight: 600 }}>
                 Dependency controls →
+              </Link>
+              <p style={{ fontSize: 15, lineHeight: 1.5, color: COLOR.muted, margin: "12px 0" }}>
+                Or watch the same claim from the other side of the counter.
+              </p>
+              <Link href="/ops" style={{ fontSize: 16, fontWeight: 600 }}>
+                Operations console →
               </Link>
             </>
           )}

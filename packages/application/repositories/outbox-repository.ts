@@ -1,4 +1,4 @@
-import { outboxEvents } from "@repo/database";
+import { and, count, desc, eq, outboxEvents } from "@repo/database";
 import { BaseRepository } from "./base-repository";
 import type { Executor } from "../executor";
 
@@ -37,5 +37,38 @@ export class OutboxRepository extends BaseRepository {
       .returning();
     if (!row) throw new Error("OutboxRepository.insert: insert returned no row");
     return row;
+  }
+
+  /** Every event this aggregate produced — the "was the trigger lost?"
+   *  question from PRD §17, answered by looking rather than guessing. */
+  async listByAggregate(
+    aggregateType: string,
+    aggregateId: string,
+    limit = 50,
+  ): Promise<OutboxEventRow[]> {
+    return this.executor
+      .select()
+      .from(outboxEvents)
+      .where(
+        and(eq(outboxEvents.aggregateType, aggregateType), eq(outboxEvents.aggregateId, aggregateId)),
+      )
+      .orderBy(outboxEvents.createdAt)
+      .limit(limit);
+  }
+
+  async countByStatus(): Promise<Array<{ status: string; count: number }>> {
+    const rows = await this.executor
+      .select({ status: outboxEvents.status, count: count() })
+      .from(outboxEvents)
+      .groupBy(outboxEvents.status);
+    return rows.map((r) => ({ status: r.status, count: Number(r.count) }));
+  }
+
+  async listRecent(limit = 25): Promise<OutboxEventRow[]> {
+    return this.executor
+      .select()
+      .from(outboxEvents)
+      .orderBy(desc(outboxEvents.createdAt))
+      .limit(limit);
   }
 }

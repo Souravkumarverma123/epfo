@@ -15,7 +15,38 @@ env:
   REGISTRY_IMAGE_API: ${{ secrets.DOCKERHUB_USERNAME }}/epfo-one-api
 
 jobs:
+  # PRD §41 puts typecheck and tests ahead of the container build. Anything
+  # that fails here must not reach Docker Hub, so build-and-push depends on
+  # this job rather than running beside it.
+  #
+  # Lint is deliberately NOT a gate yet: `pnpm lint` currently fails on
+  # pre-existing warnings and on packages/domain still carrying an ESLint 8
+  # .eslintrc.cjs under ESLint 9. Adding it as a blocking step today would
+  # only mean disabling it again; it belongs here once those are cleaned up.
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm check-types
+
+      - name: Unit tests
+        run: pnpm test
+
   build-and-push:
+    needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

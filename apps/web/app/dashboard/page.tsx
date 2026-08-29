@@ -16,11 +16,11 @@ function DashboardContent({ fullName }: { fullName: string }) {
   const summary = trpc.member.getDashboardSummary.useQuery();
 
   if (summary.isLoading) {
-    return <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>Loading...</main>;
+    return <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>Loading...</main>;
   }
   if (summary.isError || !summary.data) {
     return (
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>
+      <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>
         <p style={{ color: "#8a2321" }}>Could not load your dashboard. Please try again.</p>
       </main>
     );
@@ -32,7 +32,7 @@ function DashboardContent({ fullName }: { fullName: string }) {
   const interest = d.latestInterestCredit ? formatINR(parsePaiseWire(d.latestInterestCredit.amountPaise)) : null;
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
+    <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
       <p style={{ fontSize: 17, color: COLOR.muted, margin: "0 0 8px" }}>
         {lang === "hi" ? "इस रूप में साइन इन" : "Signed in as"}
       </p>
@@ -169,7 +169,7 @@ function DashboardContent({ fullName }: { fullName: string }) {
                     lang === "hi" ? "नियोक्ता" : "Employer",
                     lang === "hi" ? "अवधि" : "Period",
                   ].map((h) => (
-                    <th
+                    <th scope="col"
                       key={h}
                       style={{
                         textAlign: "left",
@@ -184,7 +184,7 @@ function DashboardContent({ fullName }: { fullName: string }) {
                       {h}
                     </th>
                   ))}
-                  <th
+                  <th scope="col"
                     style={{
                       textAlign: "right",
                       fontSize: 15,

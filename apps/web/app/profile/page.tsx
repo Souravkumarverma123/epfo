@@ -75,11 +75,11 @@ function ProfileContent() {
   const profile = trpc.member.getProfile.useQuery();
 
   if (profile.isLoading) {
-    return <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>Loading...</main>;
+    return <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>Loading...</main>;
   }
   if (!profile.data) {
     return (
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>
+      <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>
         <p style={{ color: "#8a2321" }}>{lang === "hi" ? "जानकारी लोड नहीं हो सकी।" : "Could not load your details."}</p>
       </main>
     );
@@ -94,7 +94,7 @@ function ProfileContent() {
   const changeLabel = t("Change", "बदलें");
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
+    <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
       <p style={{ fontSize: 17, margin: "0 0 20px" }}>
         <Link href="/dashboard">{t("Back to your account", "आपके खाते पर वापस")}</Link>
       </p>

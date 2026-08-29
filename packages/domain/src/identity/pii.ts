@@ -38,11 +38,24 @@ export function redactPII<T extends Record<string, unknown>>(obj: T): T {
   for (const [key, value] of Object.entries(obj)) {
     if (SENSITIVE_KEY_PATTERN.test(key)) {
       (out as Record<string, unknown>)[key] = "[REDACTED]";
-    } else if (value && typeof value === "object" && !Array.isArray(value)) {
-      (out as Record<string, unknown>)[key] = redactPII(value as Record<string, unknown>);
     } else {
-      (out as Record<string, unknown>)[key] = value;
+      (out as Record<string, unknown>)[key] = redactValue(value);
     }
   }
   return out;
+}
+
+/**
+ * Arrays are walked element by element rather than passed through. A list of
+ * objects — nominees, bank accounts, past claims — is exactly the shape that
+ * carries PII, and skipping arrays would have let it through untouched while
+ * the function still reported success. Non-object values are returned as-is:
+ * this redacts by key name, so a bare string has no key to judge it by.
+ */
+function redactValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(redactValue);
+  if (value && typeof value === "object") {
+    return redactPII(value as Record<string, unknown>);
+  }
+  return value;
 }

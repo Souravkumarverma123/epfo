@@ -130,6 +130,7 @@ export function AiAssistant() {
 
           <div style={{ padding: 12, borderTop: `2px solid ${COLOR.ink}`, display: "flex", gap: 8 }}>
             <input
+              aria-label={lang === "hi" ? "अपना सवाल लिखें" : "Type your question"}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {

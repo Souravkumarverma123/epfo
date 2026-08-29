@@ -34,7 +34,7 @@ function DependenciesContent() {
   const modeOf = (key: string) => states.data?.find((s) => s.dependency === key)?.mode ?? "UP";
 
   return (
-    <main style={{ maxWidth: 900, margin: "0 auto", padding: "48px 40px 96px" }}>
+    <main id="main-content" style={{ maxWidth: 900, margin: "0 auto", padding: "48px 40px 96px" }}>
       <div style={{ background: "#f9e5c9", padding: "16px 20px", margin: "0 0 32px" }}>
         <p style={{ fontSize: 15, color: "#5c3d0a", margin: 0, fontWeight: 600 }}>
           Demo control panel — not part of the citizen product. Flip a dependency here, then watch a
@@ -49,6 +49,15 @@ function DependenciesContent() {
         Every claim in progress checks these before moving past the matching step. Set one to Down, submit
         or open a claim, and watch it hold at &quot;Taking longer than usual&quot; instead of erroring —
         then set it back to Up and watch it resume within a few seconds.
+      </p>
+
+      <p style={{ fontSize: 17, margin: "0 0 40px" }}>
+        <a href="/ops" style={{ fontWeight: 600 }}>
+          Operations console →
+        </a>{" "}
+        <span style={{ color: COLOR.muted }}>
+          — the operator&apos;s view of what these switches do to a claim in flight.
+        </span>
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>

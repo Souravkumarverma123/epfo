@@ -18,5 +18,8 @@
     "openai": "^5.13.1",
     "trpc-to-openapi": "^3.1.0",
     "zod": "^4.4.3"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
   }
 }

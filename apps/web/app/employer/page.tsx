@@ -31,11 +31,11 @@ function EmployerDashboardContent({ establishmentCode }: { establishmentCode: st
   });
 
   if (dashboard.isLoading) {
-    return <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>Loading...</main>;
+    return <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>Loading...</main>;
   }
   if (!dashboard.data) {
     return (
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>
+      <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px" }}>
         <p style={{ color: "#8a2321" }}>{t("Could not load your establishment.", "आपका प्रतिष्ठान लोड नहीं हो सका।")}</p>
       </main>
     );
@@ -44,7 +44,7 @@ function EmployerDashboardContent({ establishmentCode }: { establishmentCode: st
   const d = dashboard.data;
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
+    <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24, flexWrap: "wrap", margin: "0 0 8px" }}>
         <div>
           <p style={{ fontSize: 17, color: COLOR.muted, margin: "0 0 8px" }}>
@@ -113,7 +113,7 @@ function EmployerDashboardContent({ establishmentCode }: { establishmentCode: st
           <thead>
             <tr>
               {[t("Name", "नाम"), "UAN", t("KYC", "KYC"), t("Joined", "शामिल हुए"), t("Status", "स्थिति")].map((h) => (
-                <th
+                <th scope="col"
                   key={h}
                   style={{
                     textAlign: "left",

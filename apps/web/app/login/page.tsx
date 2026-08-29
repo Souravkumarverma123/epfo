@@ -67,7 +67,7 @@ function LoginContent() {
     "!bg-transparent !text-[#262f8c] !underline !underline-offset-[3px] !p-0 !h-auto !font-semibold hover:!bg-transparent hover:!text-[#12174a]";
 
   return (
-    <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
+    <main id="main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 40px 96px" }}>
       <div
         style={{
           display: "grid",
@@ -83,13 +83,16 @@ function LoginContent() {
 
           {step === "uan" ? (
             <>
-              <label style={{ display: "block", fontSize: 18, fontWeight: 700, margin: "0 0 6px" }}>
+              <label htmlFor="login-uan" style={{ display: "block", fontSize: 18, fontWeight: 700, margin: "0 0 6px" }}>
                 {lang === "hi" ? "यूनिवर्सल अकाउंट नंबर (UAN)" : "Universal Account Number (UAN)"}
               </label>
               <p style={{ fontSize: 16, color: COLOR.muted, margin: "0 0 8px" }}>
                 {lang === "hi" ? "12 अंक। यह आपकी पेस्लिप पर है।" : "12 digits. It is on your payslip."}
               </p>
               <input
+                id="login-uan"
+                inputMode="numeric"
+                autoComplete="off"
                 value={uan}
                 onChange={(e) => setUan(e.target.value)}
                 placeholder="100 234 567 890"
@@ -133,10 +136,10 @@ function LoginContent() {
                   ? `UAN ${uan} के लिए भेजा गया 6 अंकों का कोड दर्ज करें।`
                   : `Enter the 6-digit code sent for UAN ${uan}.`}
               </p>
-              <label style={{ display: "block", fontSize: 18, fontWeight: 700, margin: "20px 0 10px" }}>
+              <span id="login-otp-label" style={{ display: "block", fontSize: 18, fontWeight: 700, margin: "20px 0 10px" }}>
                 {lang === "hi" ? "वन-टाइम कोड" : "One-time code"}
-              </label>
-              <div style={{ margin: "0 0 16px" }}>
+              </span>
+              <div role="group" aria-labelledby="login-otp-label" style={{ margin: "0 0 16px" }}>
                 <InputOTP maxLength={6} value={code} onChange={setCode}>
                   <InputOTPGroup>
                     {[0, 1, 2, 3, 4, 5].map((i) => (

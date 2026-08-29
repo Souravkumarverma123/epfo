@@ -1,14 +1,14 @@
 # EPFO One — Project Status
 
-Last updated: 2026-08-28. Hackathon submission deadline: today, 8:00 PM IST
-(buildwhatmovesindia.com). ~10 hours remaining as of last update.
+Last updated: 2026-08-29. Hackathon submission deadline: today, 8:00 PM IST
+(buildwhatmovesindia.com).
 
 ## What this is
 
 A prototype rebuild of the EPFO member portal for the "Build What Moves
 India" hackathon (brief: buildwhatmovesindia.com/brief). Built against a
 design file ("EPFO Portal Redesign.dc.html") pixel-matched throughout, and a
-PRD (`EPFO_One_PRD_v1.0.pdf` in Downloads) whose central thesis is: **once
+PRD (`EPFO_One_PRD_v1.0.pdf` in `~/Downloads`) whose central thesis is: **once
 the system says it received a claim, it must be able to explain where it is,
 recover it after failures, and never process it twice.**
 
@@ -23,7 +23,8 @@ services), `packages/database` (Drizzle + Postgres), `packages/trpc`
 Postgres`. See `docs/adr/` for the naming/boundary decisions made early on.
 
 Local dev: Postgres via Docker (`docker compose up -d`), API on :8000, web on
-:3000. Seed: `pnpm --filter @repo/database db:seed` (one member, UAN
+:3000. Operator surfaces: `/ops` (console) and `/demo/dependencies` (failure
+injection) — both unauthenticated on purpose, see ADR-003. Seed: `pnpm --filter @repo/database db:seed` (one member, UAN
 `100234567890`, mock OTP login — code is echoed back in dev, no real SMS).
 
 ## What's built and verified (all typechecked + tested live, not just compiled)
@@ -51,6 +52,30 @@ Local dev: Postgres via Docker (`docker compose up -d`), API on :8000, web on
   automatically** when the dependency comes back — no data loss, no
   re-submission. Claim completion **actually debits the ledger** (real
   `WITHDRAWAL` entry, not a fake status).
+- **Audit trail (PRD §25)** — `audit_log` is written on every claim
+  submission, absorbed duplicate, state transition, dependency hold,
+  recovery, operator retry and ledger debit. Append-only by construction
+  (`AuditRepository` has no update/delete method); before/after snapshots go
+  through `redactPII` inside the repository so no call site can forget it.
+  Where the state change is already transactional, the audit row commits in
+  that same transaction.
+- **Operations console (`/ops`, PRD §36/§37)** — the operator half of the
+  PRD's killer demo (§47 steps 5 and 12), which was the largest remaining
+  gap. Dependency status, claim counts, acknowledgement-latency percentiles,
+  outbox counts, reconciliation, held claims, recent claims, and one search
+  box that takes a claim number, a UAN **or an operation ID** (told apart by
+  shape). Opening a claim shows its whole trace: transitions, audit trail,
+  audit rows from the same operation against *other* resources (the ledger
+  debit), and outbox events. Retry control for held claims — it skips only
+  the demo pacing interval; the state machine, dependency gate and
+  optimistic concurrency all still apply.
+  Verified end-to-end against live Postgres: 5 submits → 1 claim + 4
+  recorded replays; KYC down → held with reason; operator retry while still
+  down → correctly unchanged; KYC up → auto-resume to COMPLETED; ledger
+  debit found by operation ID; reconciliation clean after the debit.
+- **Reconciliation (PRD §12/§34/§48)** — recomputes credits-minus-debits
+  from `ledger_entries` and compares against the cached `member_balances`
+  row. Surfaced on `/ops`.
 - **Your details (KYC)** — real data, includes a real `nominees` table
   (not fabricated — schema + repo + seed data). Every field has a
   `Change`/`Add`/`Confirm` action matching the design, honestly `disabled`
@@ -76,20 +101,41 @@ Docker Hub, SSHes into the box, pulls, restarts. See `docs/DEPLOY.md` for
 the exact, tested runbook (not a plan — every command in it was actually
 run).
 
-## What's NOT built yet (the remaining plan, in order)
+## What's NOT built (honest list, PRD section by section)
 
-1. **OpenAI-powered layer** — required by the hackathon brief ("powered by
-   an OpenAI model"). Design principle already agreed: **the model explains
-   state, it never decides it** — reads committed Postgres state, produces
-   language; never determines eligibility/amounts/transitions. Planned
-   smallest high-impact piece: a status/rejection explainer tied into the
-   claim status page, personalizing the existing deterministic bilingual
-   copy in `packages/domain/src/claims/copy.ts`. Blocked on: user's OpenAI
-   API key.
-2. **Final pass** — test the live deployed site end-to-end (a first pass
-   already done during deploy verification, but worth a full walkthrough
-   once the OpenAI layer lands), help draft the 2-minute video script and
-   the <250-word project summary the brief requires.
+Since the last update the OpenAI assistant (gpt-4o-mini, tool-calling —
+reads real balance and claim status, has no tool that can mutate anything)
+and the employer login + dashboard both landed. What remains:
+
+1. **Tests — the biggest remaining gap.** PRD §38 asks for unit, integration,
+   E2E, contract, load and chaos tests; §41 puts lint/typecheck/unit/
+   integration in CI; §44's Definition of Done lists "unit tests pass". CI
+   currently builds and pushes Docker images and nothing else. The chaos
+   scenario (§40) *has* been executed by hand and its expected business state
+   verified — see the `/ops` verification note above — but by hand, not by a
+   committed test.
+2. **Inngest (PRD §14, Phase 4)** — claims advance on status poll instead of
+   a durable workflow engine. Documented as a stand-in at
+   `ClaimsService.STEP_INTERVAL_MS`; the outbox is written correctly and has
+   no publisher, so events accumulate as PENDING by design.
+3. **Officer/OIDC auth and RBAC (PRD §23)** — `/ops` and `/demo/dependencies`
+   are unauthenticated on purpose rather than protected by a third mock
+   login. See ADR-003; the console states this on screen.
+4. **Accessibility not audited (PRD §31)** — contrast, screen reader and
+   keyboard nav have not been checked against WCAG 2.2 AA. `/accessibility`
+   says so plainly on the site.
+5. **Observability (PRD §26/§27)** — no OpenTelemetry/Prometheus/Grafana.
+   Partial substitute: `operation_id` correlates a claim's whole trace and
+   `/ops` reads it back, and acknowledgement-latency percentiles are computed
+   in Postgres. There are no traces or metric exporters.
+6. **Object storage / documents (PRD §21)** — `documents` table exists;
+   no S3/MinIO, no upload, no scanning.
+7. **Not attempted, out of MVP scope or deliberately dropped** — real
+   Aadhaar/NPCI/bank integrations (§6 out of scope), feature flags (§35),
+   legacy migration adapters (§33), load testing (§39), profile editing
+   (buttons visibly disabled with reasons), employer-side ECR filing and
+   challans, Kubernetes/Terraform (§46 Phase 9). Real devices untested —
+   emulated viewports only.
 
 ## Key decisions worth knowing if resuming fresh
 

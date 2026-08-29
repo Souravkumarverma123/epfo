@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { db } from "@repo/database";
 import {
   AssistantService,
+  AuditRepository,
   AuthRepository,
   AuthService,
   ClaimsRepository,
@@ -19,6 +20,7 @@ import {
   MemberRepository,
   MemberService,
   NomineeRepository,
+  OpsService,
   OutboxRepository,
   PassbookService,
   withTransaction,
@@ -56,6 +58,8 @@ export interface Context {
   passbookService: PassbookService;
   claimsService: ClaimsService;
   dependencyRepo: DependencyRepository;
+  auditRepo: AuditRepository;
+  opsService: OpsService;
   employerSessionId: string | null;
   employer: EstablishmentRow | null;
   employerAuthService: EmployerAuthService;
@@ -86,6 +90,7 @@ export async function createContext({
     new LedgerRepository(db),
   );
   const dependencyRepo = new DependencyRepository(db);
+  const auditRepo = new AuditRepository(db);
   const claimsService = new ClaimsService(
     new EmploymentRepository(db),
     new ContributionRepository(db),
@@ -94,6 +99,7 @@ export async function createContext({
     new IdempotencyRepository(db),
     new OutboxRepository(db),
     dependencyRepo,
+    auditRepo,
     withTransaction,
   );
   const employerAuthService = new EmployerAuthService(
@@ -101,6 +107,15 @@ export async function createContext({
     new EmployerAuthRepository(db),
   );
   const employerService = new EmployerService(new EmploymentRepository(db));
+  const opsService = new OpsService(
+    new ClaimsRepository(db),
+    auditRepo,
+    new OutboxRepository(db),
+    dependencyRepo,
+    new LedgerRepository(db),
+    new MemberRepository(db),
+    claimsService,
+  );
   const assistantService = openaiClient
     ? new AssistantService(openaiClient, memberService, claimsService)
     : null;
@@ -140,6 +155,8 @@ export async function createContext({
     passbookService,
     claimsService,
     dependencyRepo,
+    auditRepo,
+    opsService,
     employerSessionId,
     employer,
     employerAuthService,
