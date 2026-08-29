@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { trpc } from "~/trpc/client";
@@ -26,6 +27,14 @@ export function SiteHeader() {
   const { lang, setLang } = useLang();
   const L = CHROME_COPY[lang];
   const pathname = usePathname();
+  // Mobile only — see the <style jsx> block below. Desktop always shows the
+  // nav; this state has no effect there. Found on an actual mobile-viewport
+  // check: at 375px this 8-item nav rendered open and unconditionally, so a
+  // signed-OUT visitor landing on /login saw the full member nav (Your
+  // account, Passbook, Claims...) stacked into 3 tall rows ABOVE the login
+  // form — the actual UAN field was pushed several screens down, reading as
+  // "the login form is missing".
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const me = trpc.auth.me.useQuery();
   const employerMe = trpc.employerAuth.me.useQuery();
@@ -214,10 +223,42 @@ export function SiteHeader() {
                 </div>
               )
             )}
+            {/* Hidden on desktop by the <style jsx> below; the nav below is
+                always open there and this button has nothing to do. */}
+            <button
+              className="epfo-nav-toggle"
+              onClick={() => setMobileNavOpen((v) => !v)}
+              aria-expanded={mobileNavOpen}
+              aria-controls="epfo-site-nav"
+              aria-label={
+                mobileNavOpen
+                  ? lang === "hi"
+                    ? "मेनू बंद करें"
+                    : "Close menu"
+                  : lang === "hi"
+                    ? "मेनू खोलें"
+                    : "Open menu"
+              }
+              style={{
+                display: "none",
+                background: "none",
+                border: `2px solid ${COLOR.ink}`,
+                borderRadius: 6,
+                padding: "8px 10px",
+                fontSize: 20,
+                lineHeight: 1,
+                color: COLOR.ink,
+                cursor: "pointer",
+              }}
+            >
+              {mobileNavOpen ? "✕" : "☰"}
+            </button>
           </div>
         </div>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 40px" }}>
           <nav
+            id="epfo-site-nav"
+            className={mobileNavOpen ? "epfo-site-nav epfo-site-nav--open" : "epfo-site-nav"}
             style={{
               display: "flex",
               gap: 0,
@@ -229,6 +270,7 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => setMobileNavOpen(false)}
                 style={pathname === item.href ? NAV_ON : NAV_BASE}
               >
                 {item.label[lang]}
@@ -237,6 +279,28 @@ export function SiteHeader() {
           </nav>
         </div>
       </div>
+
+      <style jsx>{`
+        /* Mobile-only nav collapse. Scoped here (not site-shell.tsx's
+           shared block) because the toggle button and the nav it controls
+           both live in this one component — the interactive behaviour and
+           its CSS stay together instead of splitting across files.
+           !important beats the elements' own inline display styles, same
+           reasoning as site-shell.tsx's mobile overrides. */
+        @media (max-width: 640px) {
+          .epfo-nav-toggle {
+            display: inline-flex !important;
+            align-items: center;
+          }
+          .epfo-site-nav {
+            display: none !important;
+          }
+          .epfo-site-nav.epfo-site-nav--open {
+            display: flex !important;
+            flex-direction: column;
+          }
+        }
+      `}</style>
     </>
   );
 }

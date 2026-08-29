@@ -169,7 +169,17 @@ export function AiAssistant() {
       )}
 
       <button
+        className="epfo-assistant-fab"
         onClick={() => setOpen((v) => !v)}
+        aria-label={
+          open
+            ? lang === "hi"
+              ? "बंद करें"
+              : "Close"
+            : lang === "hi"
+              ? "सहायता चाहिए?"
+              : "Need help?"
+        }
         style={{
           background: COLOR.ink,
           color: COLOR.white,
@@ -186,8 +196,34 @@ export function AiAssistant() {
         }}
       >
         <span aria-hidden>✨</span>
-        {open ? (lang === "hi" ? "बंद करें" : "Close") : lang === "hi" ? "सहायता चाहिए?" : "Need help?"}
+        <span className="epfo-assistant-fab-label">
+          {open ? (lang === "hi" ? "बंद करें" : "Close") : lang === "hi" ? "सहायता चाहिए?" : "Need help?"}
+        </span>
       </button>
+
+      <style jsx>{`
+        /* Found on an actual mobile-viewport check: at 375px the page's own
+           text runs close enough to the right edge that this fixed
+           bottom-right pill sat directly on top of real body copy (e.g. the
+           home page's intro paragraph, the login page's helper text) —
+           there's no reserved margin the way there is on a 1100px desktop
+           layout. The fix is to shrink the closed button to an icon-only
+           circle, the standard mobile chat-widget pattern, rather than move
+           it — moving it would just relocate the same overlap risk
+           elsewhere on a page whose content we don't control here. The
+           open panel already clamps to the viewport (maxWidth/maxHeight
+           calc() above) and needs no change.
+           !important for the same reason as site-header.tsx's nav toggle —
+           overriding this component's own inline styles. */
+        @media (max-width: 640px) {
+          .epfo-assistant-fab {
+            padding: 14px !important;
+          }
+          .epfo-assistant-fab-label {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
